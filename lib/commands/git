@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+function git_description(){
+  echo "Get and disaply some info about the current working copy from Git"
+}
+
+function git_help(){
+  echo -e "\n usage: $(basename "$0") git <subcommand>"
+  echo -e "\n AVAILABLE SUBCOMMANDS:\n"
+  echo " info             Display some basic info about the git repo"
+  echo " push-branch      Push the current branch checkout"
+  echo " new-branch       Make a new branch from the current master"
+  echo " delete-merged    Attempt to delete local copies of merged branches"
+  echo " pbr              Attempt to delete local copies of gone branches"
+  echo ""
+}
+
+function git_handle(){
+  command="$1"
+
+  case $command in
+  info)
+    pushd . >/dev/null || exit 1
+    while [ ! -d .git ] && [ ! "$(pwd)" = "/" ]; do cd ..; done
+    if [ -d .git ]; then
+      echo -e "== Remote URL:\n$(git remote -v)\n"
+      echo -e "== Remote Branches:\n$( git branch -r)\n"
+      echo -e "== Local Branches:\n$( git branch)\n"
+      echo -e "== Configuration (.git/config):\n$( cat .git/config)\n"
+      echo -e "== Most Recent Commit:\n$( git --no-pager log --max-count=1)\n"
+      echo ""
+    else
+      echo "Not a git repository."
+    fi
+    popd >/dev/null || exit 1
+  ;;
+
+  new-branch)
+    echo -e "\nBranches should follow the following naming convention: GHISSUENUMBER-initials-short_summary\n"
+    git checkout master
+    git pull
+    shift;
+    branch="$1"
+    git checkout -b "${branch}"
+  ;;
+
+  push-branch)
+    git push --set-upstream origin "$(git rev-parse --abbrev-ref HEAD)"
+  ;;
+
+  delete-merged)
+    git checkout master
+    git branch --merged | grep -vi master >/tmp/merged-branches
+    xargs git branch -d </tmp/merged-branches
+  ;;
+
+  pbr)
+    git branch -vv | grep 'origin/.*: gone]' | awk '{print $1}' | xargs git branch -D
+  ;;
+
+  *)
+    git_help
+  ;;
+  
+  esac
+}

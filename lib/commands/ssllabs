@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+function ssllabs_description(){
+  echo "Perform SSLLabs scan; requires ssllabs-scan go application"
+}
+
+function ssllabs_help(){
+  echo -e "\n usage: $(basename "$0") ssllabs <subcommand>"
+  echo -e "\n AVAILABLE SUBCOMMANDS: \n"
+  echo " <target>     Scans <target> site and returns grade"
+  echo ""
+}
+
+function ssllabs_handle(){
+  if [[ -z "${GOROOT}" || -z "${GOPATH}" ]]; then
+    echo ""
+    echo " No GO environment detected, exiting..."
+    echo ""
+  fi
+
+  echo ""
+  echo "This may take a while if results are older than 12 hours..."
+  echo ""
+  ssllabs-scan-v3 -usecache -maxage 12 -grade "$1"
+}

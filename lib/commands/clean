@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+function clean_description(){
+    echo "cleanup macOS system cruft"
+}
+
+function clean_help(){
+  echo -e "\n usage: $(basename "$0") clean <subcommand>"
+  echo -e "\n AVAILABLE SUBCOMMANDS:\n"
+  echo " all         full clean"
+  echo " tm          remove TimeMachine local snapshots"
+  echo " ql          remove QuickLook cache"
+  echo " dns         remove DNS cache, if possible"
+  echo " mem         purge unused pages and return them to free pool"
+  echo " xauth       reset the Xauth control file"
+  echo ""
+}
+
+function clean_timemachine(){
+  #TimeMachine local snapshots
+  for s in $(tmutil listlocalsnapshots / | awk -F\. '{print $4}')
+    do
+      sudo tmutil deletelocalsnapshots $s
+  done
+}
+
+function clean_syscache(){
+  #system caches
+  sudo rm -rf /Library/Caches/* > /dev/null 2>&1
+
+  #application caches
+  rm -rf ~/Library/Containers/*/Data/Library/Caches/*
+}
+
+function clean_quicklook(){
+  #quicklook purge
+  qlmanage -r > /dev/null
+  qlmanage -r cache > /dev/null
+  rm -f ~/Library/Preferences/com.apple.quicklookconfig.plist
+  rm -f ~/Library/Preferences/com.apple.QuickLookDaemon.plist
+  sudo killall cfprefsd >/dev/null 
+}
+
+function clean_logs(){
+  #user logs
+  sudo rm -rf ~/Library/logs/* > /dev/null 2>&1
+
+  #system logs
+  sudo rm -rf /Library/logs/* > /dev/null 2>&1
+  sudo rm -rf /var/log/* > /dev/null 2>&1
+  sudo rm -rf /private/var/folders/* > /dev/null 2>&1
+}
+
+function clean_chrome(){
+  #Chrome IndexedDB data
+  sudo rm -fr ~/Library/Application\ Support/Google/Chrome/Profile\ 1/IndexedDB/*  > /dev/null 2>&1
+}
+
+function clean_xauth(){
+  command -v xauth || exit 1
+  local host key
+  host="$(hostname)"
+  key="$(perl -e 'srand; printf int(rand(100000000000000000))')"
+  key="$key$key"
+  /usr/X11/bin/xauth list | awk '{print $1}' | xargs /usr/X11/bin/xauth remove
+  /usr/X11/bin/xauth add "${host}"/unix:0 . "$key"
+}
+
+function clean_handle(){
+  command="$1"
+  
+  case $command in
+  all)
+    clean_timemachine
+    clean_syscache
+    clean_quicklook
+    clean_logs
+    clean_chrome
+    clean_xauth
+    echo ""
+  ;;
+
+  tm)
+    clean_timemachine
+  ;;
+
+  ql)
+    clean_quicklook
+  ;;
+
+  dns)
+    sudo killall -HUP mDNSResponder
+  ;;
+
+  mem)
+    sudo purge
+  ;;
+
+  xauth)
+    clean_xauth
+  ;;
+
+  *)
+    clean_help
+  ;;
+
+   esac
+}
