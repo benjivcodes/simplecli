@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Clone and checkout master branch of MHA, then launch the webapp for use.
+# MHA https://github.com/lnxg33k/email-header-analyzer
+
+pushd +0 . || exit 1
+
+# Launch the Mail Header Analyzer (MHA)
+cd ${HOME} || exit 1
+rm -fr mailheaderanalyzer
+mkdir mailheaderanalyzer
+git clone https://github.com/lnxg33k/email-header-analyzer.git mailheaderanalyzer
+
+cd ${HOME}/.cli/3rdparty/mailheaderanalyzer/ || exit 1
+git checkout master
+git pl
+python server.py -d
+
+popd || exit 1
