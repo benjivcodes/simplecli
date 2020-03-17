@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# Connect to variety of hosts by location/type.
+# For host in the kvbash array it's assumed that: source "${CLIHOME}/lib/bash/common"
+# or similar exits in your environment config and was loaded successfully.
+
+# Disclaimer: while support for SAP VPNS exists this is in no way supported
+# or endorsed by SAP or SAP IT Support. This script will not bypass any protections
+# or policy put in place on SAP managed networks.
+
+function con_help(){
+  echo ""
+  echo " Connect to a variety of hosts by location/type. Please read DISCLAIMER"
+  echo " contained within the cli/bin/con file for additional details on SAP usage."
+  echo ""
+  echo " -p connect to SAP production host; takes one argument, requires vpn conection"
+  echo " -d connect to SAP development host; takes one argument"
+  echo " -l connect to local host (on same network); takes one argument"
+  echo " -a connect to kvbash host alias (on same network); takes one argument"
+  echo " -b connect to SAP bastion host; takes one argument, may require vpn connection"
+  echo " -h display this help"
+  echo ""
+  exit 1
+}
+
+# Support for SAP vpns via BigIP client.
+function vpncheck(){
+  /usr/sbin/netstat -nr -f inet | grep -i ^default | grep -i 1.1.1.1 -q
+  status="$?"
+  if [ $status -gt 0 ];
+  then
+    echo -e "\nDoesn't look like you're connected to correct VPN!\n"
+    exit 1
+  fi
+}
+
+while true; do
+  case "$1" in
+    -p)
+      vpncheck
+      shift;
+      if [ "$(kvget $1)" = "" ] && [ -z $2 ];
+      then
+        /usr/bin/ssh -4 -t $(kvget b.prod) -A -t /usr/bin/ssh -4 $1
+      elif [ "$(kvget $1)" != "" ] && [ -z $2 ];
+      then
+        /usr/bin/ssh -4 -t $(kvget b.prod) -A -t /usr/bin/ssh -4 $(kvget $1)
+      fi
+      exit 1
+    ;;
+
+    -d)
+      shift;
+      /usr/bin/ssh -4 -t $(kvget b.aws) -A -t /usr/bin/ssh -4 $1
+      exit 1
+    ;;
+
+    -l)
+      shift;
+      /usr/bin/ssh -4 -t $1
+      exit 1
+    ;;
+
+    -a)
+      shift;
+      /usr/bin/ssh -4 -t $(kvget $1)
+      exit 1
+    ;;
+
+    -b)
+      shift;
+      if [ "$1" == "dev" ]
+      then
+        ssh $(kvget b.aws)
+      elif [ "$1" == "prod" ]
+      then
+        vpncheck
+        ssh $(kvget b.prod)
+      fi
+      exit 1
+      ;;
+
+    -h)
+      con_help
+      exit 1
+    ;;
+  esac
+done
