@@ -7,6 +7,8 @@
 # or endorsed by SAP or SAP IT Support. This script will not bypass any protections
 # or policy put in place on SAP managed networks.
 
+source "${CLIHOME}/3rdparty/bin/kvbash"
+
 function con_help(){
   echo ""
   echo " Connect to a variety of hosts by location/type. Please read DISCLAIMER"
