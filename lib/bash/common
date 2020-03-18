@@ -187,7 +187,7 @@ function _git_prompt() {
 }
 
 function _prompt_command() {
-    PS1="\[$IRed\][\h]\[$IRed\][\[$Blue\]\u\[$IPurple\]::\W\[$IRed\]]\[$IGreen\]$ \[$Color_Off\]"
+    PS1="\[$IRed\][\h]\[$IRed\][\[$Blue\]\u\[$IPurple\]::\W\[$IRed\]]\[$IGreen\]\$ \[$Color_Off\]"
 }
 
 # Extract the public key from a PEM based private key
