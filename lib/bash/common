@@ -223,8 +223,8 @@ alias e='vimr'
 alias ls='ls -FG --color=auto'
 alias rm='rm -i'
 alias sudo='sudo -H'
-alias vi='vimr'
-alias vim='vimr'
+alias vi='/usr/bin/vim'
+alias vim='/usr/bin/vim'
 alias subl="/usr/bin/open -a 'Sublime Text'"
 alias kvadd="kvset"
 alias grep='grep --color'
