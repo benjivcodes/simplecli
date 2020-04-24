@@ -51,7 +51,7 @@ help() {
 
   source_commands
   for command in "${available_commands[@]}"; do
-    echo -e "  ${command}\t$(${command}_description)"
+    echo -e "  ${command} :::: $(${command}_description)"
   done
 
   echo ""
