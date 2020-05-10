@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Simple MacOS cleanup toolchain
 
 function clean_description(){
     echo "cleanup macOS system cruft"
@@ -29,16 +30,16 @@ function clean_syscache(){
   sudo rm -rf /Library/Caches/* > /dev/null 2>&1
 
   #application caches
-  rm -rf ~/Library/Containers/*/Data/Library/Caches/*
+  rm -rf ~/Library/Containers/*/Data/Library/Caches/* > /dev/null 2>&1
 }
 
 function clean_quicklook(){
   #quicklook purge
-  qlmanage -r > /dev/null
-  qlmanage -r cache > /dev/null
+  qlmanage -r > /dev/null 2>&1
+  qlmanage -r cache > /dev/null 2>&1
   rm -f ~/Library/Preferences/com.apple.quicklookconfig.plist
   rm -f ~/Library/Preferences/com.apple.QuickLookDaemon.plist
-  sudo killall cfprefsd >/dev/null 
+  sudo killall cfprefsd >/dev/null 2>&1
 }
 
 function clean_logs(){
@@ -53,7 +54,7 @@ function clean_logs(){
 
 function clean_chrome(){
   #Chrome IndexedDB data
-  sudo rm -fr ~/Library/Application\ Support/Google/Chrome/Profile\ 1/IndexedDB/*  > /dev/null 2>&1
+  sudo rm -fr ~/Library/Application\ Support/Google/Chrome/Profile\ 1/IndexedDB/* > /dev/null 2>&1
 }
 
 function clean_xauth(){
@@ -68,7 +69,7 @@ function clean_xauth(){
 
 function clean_handle(){
   command="$1"
-  
+
   case $command in
   all)
     clean_timemachine

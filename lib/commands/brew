@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Homebrew toolchain for MacOS
+# Wrapper for Homebrew on MacOS
 
 function brew_description(){
     echo "Homebrew toolchain for macOS"
@@ -21,8 +21,6 @@ function brew_handle(){
 
   case $command in
   bootstrap)
-    export HOMEBREW_USE_GCC=1
-    export HOMEBREW_VERBOSE=1
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     brew install findutils --with-default-names
     brew install gnu-indent --with-default-names
@@ -36,17 +34,13 @@ function brew_handle(){
     brew install popt
     brew install boost
     brew install bash-completion
-    brew install clamav
-    brew install coreutils
     brew install shellcheck
-    brew install youtube-dl
     brew install lesspipe
-    brew install golang
     brew install jq
-    brew install neovim
+    brew install shfmt
+    brew install golang
     brew cask install android-sdk
     brew cask install android-platform-tools
-    brew install shfmt
     brew cask install java
   ;;
 
@@ -73,8 +67,8 @@ function brew_handle(){
 
   multiuser)
     echo -e "\nYou will need to add users to the group 'admin'"
-    sudo chgrp -R admin /usr/local
-    sudo chmod -R g+w /usr/local
+    sudo chgrp -R admin /usr/local/*
+    sudo chmod -R g+w /usr/local/*
     sudo chgrp -R admin /Library/Caches/Homebrew
     sudo chmod -R g+w /Library/Caches/Homebrew
     sudo chgrp -R admin /opt

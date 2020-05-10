@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Switch and manage MacOS locales
 
 function locale_description(){
     echo "set/get the macOS network locale"
