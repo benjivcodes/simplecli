@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Wrapper for ssllabs tool
 
 function ssllabs_description(){
   echo "Perform SSLLabs scan; requires ssllabs-scan go application"

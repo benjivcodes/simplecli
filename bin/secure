@@ -2,6 +2,12 @@
 # Encrypt/decrypt a file with openssl.
 # Create an encrypted dmg on the desktop.
 
+function passwd_check(){
+  if [[ -z "${ENCRYPTION_PWD}" ]]; then
+      echo -e "\nExpected ENCRYPTION_PWD environment to be set, exiting!"
+  fi
+}
+
 function secure_help(){
   echo ""
   echo " Create an ecrypted file/dmg from unecrypted source."
@@ -37,26 +43,28 @@ while true; do
     ;;
 
     -e)
+      passwd_check
       shift;
       if [ -z $1 ];
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1
       else
-        openssl aes-256-cbc -salt -a -e -in "$1" -out "$1".enc -k "${encryption_pwd}"
+        openssl aes-256-cbc -salt -a -e -in "$1" -out "$1".enc -k "${ENCRYPTION_PWD}"
       fi
 
       exit 1
     ;;
 
     -d)
+      passwd_check
       shift;
       if [ -z $1 ];
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1
       else
-        openssl aes-256-cbc -salt -a -e -d -in "$1" -out $(basename -s .enc "$1") -k "${encryption_pwd}"
+        openssl aes-256-cbc -salt -a -e -d -in "$1" -out $(basename -s .enc "$1") -k "${ENCRYPTION_PWD}"
       fi
 
       exit 1

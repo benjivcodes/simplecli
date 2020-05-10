@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+# Wrapper for Android tools/SDK
 
 function android_description(){
-    echo "Android SDK and Platform toolchain for macOS"
+    echo "Android SDK and Platform toolchain helper for macOS"
 }
 
 function android_help(){
