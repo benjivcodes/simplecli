@@ -1,32 +1,33 @@
 #!/usr/bin/env bash
 # Connect to variety of hosts by location/type.
-# For host in the kvbash array it's assumed that: source "${CLIHOME}/lib/bash/common"
-# or similar exits in your environment config and was loaded successfully.
 
-# Disclaimer: while support for SAP VPNS exists this is in no way supported
-# or endorsed by SAP or SAP IT Support. This script will not bypass any protections
-# or policy put in place on SAP managed networks.
+# Disclaimer: while support for VPNS exists this is in no way supported
+# or endorsed by or IT Support. This script will not bypass any protections
+# or policy put in place on managed networks.
 
-source "${CLIHOME}/3rdparty/bin/kvbash"
+function bast_check(){
+  if [[ -z "${BASTION_DEV}" || -z "${BASTION_PROD}" ]]; then
+      echo -e "\nExpected BASTION_DEV and BASTION_PROD environment to be set, exiting!"
+  fi
+}
 
 function con_help(){
   echo ""
   echo " Connect to a variety of hosts by location/type. Please read DISCLAIMER"
-  echo " contained within the cli/bin/con file for additional details on SAP usage."
+  echo " contained within the cli/bin/con file for additional details on usage."
   echo ""
-  echo " -p connect to SAP production host; takes one argument, requires vpn conection"
-  echo " -d connect to SAP development host; takes one argument"
-  echo " -l connect to local host (on same network); takes one argument"
-  echo " -a connect to kvbash host alias (on same network); takes one argument"
-  echo " -b connect to SAP bastion host; takes one argument, may require vpn connection"
+  echo " -p connect to production host; takes one argument, requires vpn conection"
+  echo " -d connect to development host; takes one argument"
+  echo " -l connect to local host (on same network, or does not require a bastion); takes one argument"
+  echo " -b connect to bastion host; takes one argument, may require vpn connection"
   echo " -h display this help"
   echo ""
   exit 1
 }
 
-# Support for SAP vpns via BigIP client.
+# Support for vpns via BigIP client.
 function vpncheck(){
-  /usr/sbin/netstat -nr -f inet | grep -i ^default | grep -i 1.1.1.1 -q
+  /usr/sbin/netstat -nr -f inet | grep -i ^default | grep -i ${VPN_DEFAULT_GW} -q
   status="$?"
   if [ $status -gt 0 ];
   then
@@ -39,20 +40,16 @@ while true; do
   case "$1" in
     -p)
       vpncheck
+      bast_check
       shift;
-      if [ "$(kvget $1)" = "" ] && [ -z $2 ];
-      then
-        /usr/bin/ssh -4 -t $(kvget b.prod) -A -t /usr/bin/ssh -4 $1
-      elif [ "$(kvget $1)" != "" ] && [ -z $2 ];
-      then
-        /usr/bin/ssh -4 -t $(kvget b.prod) -A -t /usr/bin/ssh -4 $(kvget $1)
-      fi
+      /usr/bin/ssh -4 -t ${BASTION_PROD} -A -t /usr/bin/ssh -4 $1
       exit 1
     ;;
 
     -d)
+      bast_check
       shift;
-      /usr/bin/ssh -4 -t $(kvget b.aws) -A -t /usr/bin/ssh -4 $1
+      /usr/bin/ssh -4 -t ${BASTION_DEV} -A -t /usr/bin/ssh -4 $1
       exit 1
     ;;
 
@@ -62,21 +59,16 @@ while true; do
       exit 1
     ;;
 
-    -a)
-      shift;
-      /usr/bin/ssh -4 -t $(kvget $1)
-      exit 1
-    ;;
-
     -b)
+      bast_check
       shift;
       if [ "$1" == "dev" ]
       then
-        ssh $(kvget b.aws)
+        ssh ${BASTION_DEV}
       elif [ "$1" == "prod" ]
       then
         vpncheck
-        ssh $(kvget b.prod)
+        ssh ${BASTION_PROD}
       fi
       exit 1
       ;;
