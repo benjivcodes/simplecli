@@ -2,6 +2,22 @@
 # Common functions for BaSH Profile Configuration
 # This should be sources from the environment configuration, e.g. .bash_profile
 
+# 1password-cli functions
+function opon() {
+  eval $(op signin my)
+}
+
+function opoff() {
+  op signout
+  unset OP_SESSION_my
+}
+
+function opsshkey() {
+  eval $(op signin my)
+  echo "$(op get item "ssh-key-master" |jq -r '.details.notesPlain')"|ssh-add -
+  op signout
+}
+
 # Inject new locations into the first position in $PATH
 function pathmunge() {
     if ! echo "$PATH" | grep -E -q "(^|:)$1($|:)"; then PATH="$1":"$PATH"; fi
