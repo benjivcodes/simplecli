@@ -28,6 +28,13 @@ function opsshkey() {
   op signout
 }
 
+function update_op(){
+  cd /tmp || exit 1
+  rm -f op_darwin*
+  wget $(lynx -dump -listonly https://app-updates.agilebits.com/product_history/CLI | grep ^"\ \ \ 2" | sed -r 's/^\ \ \ [0-9]+\. //')
+  sudo installer -pkg $(ls op_darwin_amd64*) -target /
+}
+
 # Inject new locations into the first position in $PATH
 function pathmunge() {
     if ! echo "$PATH" | grep -E -q "(^|:)$1($|:)"; then PATH="$1":"$PATH"; fi
