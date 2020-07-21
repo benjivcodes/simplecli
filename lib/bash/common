@@ -22,10 +22,9 @@ function opoff() {
   unset OP_SESSION_my
 }
 
-function opsshkey() {
+function op_getsshkey() {
   eval $(op signin my)
-  echo "$(op get item "ssh-key-master" |jq -r '.details.notesPlain')"|ssh-add -
-  op signout
+  echo "$(op get item "$1" |jq -r '.details.notesPlain')"|ssh-add -
 }
 
 function update_op(){
@@ -37,9 +36,18 @@ function update_op(){
 
 function getpwd() {
   eval $(op signin my)
-  op get item "$1" |jq -r '.details.fields[] |select(.designation=="password").value'
+  op get item "$1" |jq -r '.details.fields[] |select(.designation=="password").value' | pbcopy
   op signout
 }
+
+function getmfa() {
+  eval $(op signin my)
+  op get totp "$1" | pbcopy
+  op signout
+  sleep 30
+  pbcopy < /dev/null
+}
+
 # Inject new locations into the first position in $PATH
 function pathmunge() {
     if ! echo "$PATH" | grep -E -q "(^|:)$1($|:)"; then PATH="$1":"$PATH"; fi
