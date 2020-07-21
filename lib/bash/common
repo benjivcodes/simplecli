@@ -27,6 +27,13 @@ function op_getsshkey() {
   echo "$(op get item "$1" |jq -r '.details.notesPlain')"|ssh-add -
 }
 
+function op_getpubkey() {
+  eval $(op signin my)
+  echo "$(op get item "$1" |jq -r '.details.notesPlain')" > /tmp/keytmp
+  chmod 600 /tmp/keytmp
+  ssh-keygen -f /tmp/keytmp -y | pbcopy
+}
+
 function update_op(){
   cd /tmp || exit 1
   rm -f op_darwin*
