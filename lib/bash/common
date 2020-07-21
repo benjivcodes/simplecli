@@ -24,7 +24,7 @@ function opoff() {
 
 function op_getsshkey() {
   eval $(op signin my)
-  echo "$(op get item "$1" |jq -r '.details.notesPlain')"|ssh-add -
+  echo "$(op get item "$1"-ssh-key |jq -r '.details.notesPlain')"|ssh-add -
 }
 
 function op_getpubkey() {
