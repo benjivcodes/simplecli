@@ -2,7 +2,6 @@
 # Common functions for BaSH Profile Configuration
 # This should be sources from the environment configuration, e.g. .bash_profile
 
-<<<<<<< HEAD
 # Update slacktee
 function update_slacktee(){
   pushd . >/dev/null || exit 1
@@ -11,7 +10,8 @@ function update_slacktee(){
   curl -s https://api.github.com/repos/coursehero/slacktee/releases/latest | jq '.zipball_url' | xargs wget -qic  -A ".zip" -O temp.zip && unzip -q -j -o -u temp.zip *slacktee.sh
   mv slacktee.sh ${CLIHOME}/3rdparty/bin/slacktee
   popd >/dev/null || exit 1
-=======
+}
+
 # 1password-cli functions
 function opon() {
   eval $(op signin my)
@@ -26,7 +26,6 @@ function opsshkey() {
   eval $(op signin my)
   echo "$(op get item "ssh-key-master" |jq -r '.details.notesPlain')"|ssh-add -
   op signout
->>>>>>> 221268d59b951fb32147b34e7448d7c092d5f2bf
 }
 
 # Inject new locations into the first position in $PATH
