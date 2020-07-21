@@ -35,6 +35,11 @@ function update_op(){
   sudo installer -pkg $(ls op_darwin_amd64*) -target /
 }
 
+function getpwd() {
+  eval $(op signin my)
+  op get item "$1" |jq -r '.details.fields[] |select(.designation=="password").value'
+  op signout
+}
 # Inject new locations into the first position in $PATH
 function pathmunge() {
     if ! echo "$PATH" | grep -E -q "(^|:)$1($|:)"; then PATH="$1":"$PATH"; fi
