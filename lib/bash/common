@@ -22,9 +22,15 @@ function opoff() {
   unset OP_SESSION_my
 }
 
+function op_addsshkey() {
+  eval $(op signin my)
+  echo "$(op get item "$1"-ssh-key |jq -r '.details.notesPlain')" | ssh-add -
+}
+
 function op_getsshkey() {
   eval $(op signin my)
-  echo "$(op get item "$1"-ssh-key |jq -r '.details.notesPlain')"|ssh-add -
+  echo "$(op get item "$1"-ssh-key |jq -r '.details.notesPlain')" | pbcopy
+  op signout
 }
 
 function op_getpubkey() {
