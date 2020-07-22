@@ -1,10 +1,29 @@
 #!/usr/bin/env bash
 
+
+# https://github.com/course-hero/slacktee
+# ------------------------------------------------------------
+# Copyright 2017 Course Hero, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ------------------------------------------------------------
+
+
 # ----------
 # Default Configuration
 # ----------
-webhook_url=""       # Incoming Webhooks integration URL
-upload_token=""      # The user's API authentication token, only used for file uploads
+webhook_url=""       # Incoming Webhooks integration URL. Old way to interact with Slack. (Deprecated)
+token=""             # The authentication token of the bot user. Used for accessing Slack APIs.
 channel="general"    # Default channel to post messages. '#' is prepended, if it doesn't start with '#' or '@'.
 tmp_dir="/tmp"       # Temporary file is created in this directory.
 username="slacktee"  # Default username to post messages.
@@ -17,6 +36,7 @@ attachment=""        # Default color of the attachments. If an empty string is s
 me=$(basename "$0")
 title=""
 mode="buffering"
+streaming_batch_time=1
 link=""
 textWrapper="\`\`\`"
 parseMode=""
@@ -42,15 +62,31 @@ function escape_string()
 	echo "$result"
 }
 
-function err_exit() 
+function write_to_stderr()
 {
-	exit_code=$1
-	shift
-	echo "$me: $@" > /dev/null >&2
-	exit $exit_code
+    echo "$me: $@" > /dev/null >&2
 }
 
-function cleanup() 
+function err_exit()
+{
+	local code=$1
+	shift
+	write_to_stderr $@
+	exit $code
+}
+
+function get_ok_in_response() {
+    local response=$1
+    echo "$(echo "$response" | awk 'match($0, /"ok":([^,}]+)/) {print substr($0, RSTART+5, RLENGTH-5)}')"
+}
+
+function handle_signal()
+{
+    cleanup
+    err_exit 1 "Aborting"
+}
+
+function cleanup()
 {
 	[[ -f $filename ]] && rm "$filename"
 }
@@ -63,6 +99,8 @@ Usage: $me [options]
 options:
     -h, --help                        Show this help.
     -n, --no-buffering                Post input values without buffering.
+    --streaming                       Post input as it comes in, and update one comment with further input.
+    --streaming-batch-time n          Only update streaming slack output every n seconds. Defaults to 1.
     -f, --file                        Post input values as a file.
     -l, --link                        Add a URL link to the message.
     -c, --channel channel_name        Post input values to specified channel or user.
@@ -79,17 +117,16 @@ options:
     -e, --field title value           Add a field to the attachment. You can specify this multiple times.
     -s, --short-field title value     Add a short field to the attachment. You can specify this multiple times.
     -o, --cond-color color pattern    Change the attachment color if the specified Regex pattern matches the input.
-                                      You can specify this multile times.
+                                      You can specify this multiple times.
                                       If more than one pattern matches, the latest matched pattern is used.
     -d, --cond-prefix prefix pattern  This prefix is added to the message, if the specified Regex pattern matches the input.
-                                      You can specify this multile times.
+                                      You can specify this multiple times.
                                       If more than one pattern matches, the latest matched pattern is used.
+    -q, --no-output                   Don't echo the input.
     --config config_file              Specify the location of the config file.
     --setup                           Setup slacktee interactively.
 EOF
 }
-
-
 
 function send_message()
 {
@@ -148,7 +185,7 @@ function send_message()
 
 			if [[ ${#fields[@]} != 0 ]]; then
 				message_attr="$message_attr, \"fields\": ["
-				for field in "${fields[@]}"; do 
+				for field in "${fields[@]}"; do
 					message_attr="$message_attr $field,"
 				done
 				message_attr=${message_attr%?} # Remove last comma
@@ -158,35 +195,88 @@ function send_message()
 			# Close attachment
 			message_attr="$message_attr }], "
 		else
-			message_attr="\"text\": \"$wrapped_message\","	    
+			message_attr="\"text\": \"$wrapped_message\","
 		fi
 
 		icon_url=""
 		icon_emoji=""
-		if echo "$icon" | grep -q "^https\?://.*"; then
-			icon_url="$icon"
-		else
-			icon_emoji=":$icon:"
+		if [ ! -z $icon ]; then
+			if echo "$icon" | grep -q "^https\?://.*"; then
+				icon_url="$icon"
+			else
+				icon_emoji=":$icon:"
+			fi
 		fi
 
 		username=$(escape_string "$username")
 
-		json="{\
-                  \"channel\": \"$channel\", \
-                  \"username\": \"$username\", \
-                  $message_attr \"icon_emoji\": \"$icon_emoji\", \
-                  \"icon_url\": \"$icon_url\" $parseMode}"
-		post_result=$(curl -X POST --data-urlencode \
-                  "payload=$json" "$webhook_url" 2> /dev/null)
-                if [[ $post_result != "ok" ]]; then
-                	err_exit 1 "$post_result"
-                fi
+		if [[ $mode == "streaming" ]]; then
+			if [[ -z "$streaming_ts" ]]; then
+				json="{\
+					\"channel\": \"$channel\", \
+					\"username\": \"$username\", \
+					$message_attr \"icon_emoji\": \"$icon_emoji\", \
+					\"icon_url\": \"$icon_url\" $parseMode}"
+
+				post_result=$(curl -H "Authorization: Bearer $token" -H 'Content-type: application/json; charset=utf-8' -X POST -d "$json" https://slack.com/api/chat.postMessage 2> /dev/null)
+				if [ $(get_ok_in_response $post_result) != "true" ]; then
+				    write_to_stderr "$post_result"
+				    exit_code=1
+				else
+				    # chat.update requires the channel id, not the name
+				    streaming_channel_id="$(echo "$post_result" | awk 'match($0, /channel":"([^"]*)"/) {print substr($0, RSTART+10, RLENGTH-11)}'|sed 's/\\//g')"
+
+				    # timestamp is used as the message id
+				    streaming_ts="$(echo "$post_result" | awk 'match($0, /ts":"([^"]*)"/) {print substr($0, RSTART+5, RLENGTH-6)}'|sed 's/\\//g')"
+				fi
+			else
+				# batch updates every $streaming_batch_time seconds
+				now=$(date '+%s')
+				if [ -z "$streaming_last_update" ] || [ "$now" -ge $[streaming_last_update + streaming_batch_time] ]; then
+					streaming_last_update="$now"
+					json="{\
+						\"channel\": \"$streaming_channel_id\", \
+						\"ts\": \"$streaming_ts\", \
+						$message_attr \"icon_emoji\": \"$icon_emoji\", \
+						$parseMode}"
+
+					post_result=$(curl -H "Authorization: Bearer $token" -H 'Content-type: application/json; charset=utf-8' -X POST -d "$json" https://slack.com/api/chat.update 2> /dev/null)
+					if [ $(get_ok_in_response $post_result) != "true" ]; then
+					        write_to_stderr "$post_result"
+						exit_code=1
+					fi
+				fi
+			fi
+		else
+			json="{\
+				\"channel\": \"$channel\", \
+				\"username\": \"$username\", \
+				$message_attr \"icon_emoji\": \"$icon_emoji\", \
+				\"icon_url\": \"$icon_url\" $parseMode}"
+			if [[ ! -z $webhook_url ]]; then
+			    # Prioritize the webhook_url for the backward compatibility
+			    post_result=$(curl -X POST --data-urlencode "payload=$json" "$webhook_url" 2> /dev/null)
+			    if [[ $post_result != "ok" ]]; then
+				write_to_stderr "$post_result"
+				exit_code=1
+			    fi
+			else
+			    post_result=$(curl -H "Authorization: Bearer $token" -H 'Content-type: application/json; charset=utf-8' -X POST -d "$json" https://slack.com/api/chat.postMessage 2> /dev/null)
+			    if [ $(get_ok_in_response $post_result) != "true" ]; then
+				write_to_stderr "$post_result"
+				exit_code=1
+			    fi
+			fi
+		fi
 	fi
 }
 
 function process_line()
 {
-	echo "$1"
+	# do not print message / line if -q option is specified
+	if [[ "$no_output" == "" ]]; then
+		echo "$1"
+	fi
 
 	# Escape special characters.
 	line=$(escape_string "$1")
@@ -222,18 +312,42 @@ function process_line()
 		prefix=''
 		if [[ -z $attachment ]]; then
 			prefix=$title
-		fi  
+		fi
 		send_message "$prefix$line"
 	elif [[ $mode == "file" ]]; then
 		# We should use unescaped value in the file mode
 		echo "$1" >> "$filename"
-	else
+	elif [[ $mode == "buffering" ]]; then
 		if [[ -z "$text" ]]; then
 			text="$line"
 		else
-			text="$text\n$line"
-		fi  
-	fi  
+			# See https://api.slack.com/rtm#limits for details on character limits
+			local message="$text\n$line"
+			if [[ ${#message} -ge 4000 ]]; then
+				send_message "$text"
+				text="$line"
+			else
+				text=$(echo "$text\n$line")
+			fi
+		fi
+	elif [[ $mode == "streaming" ]]; then
+		# Keep the latest matched pattern and use it for sending message
+		# "$attachment" is the default value
+		if [[ -z $last_found_pattern_color || $found_pattern_color != "$attachment" ]]; then
+			last_found_pattern_color=$found_pattern_color
+		fi
+		found_pattern_color=$last_found_pattern_color
+
+		if [[ -z "$text" ]]; then
+			text="$line"
+		else
+			text=$(echo "$text\n$line")
+		fi
+
+		send_message "$text"
+	else
+		err_exit 1 "Invalid mode: $mode."
+	fi
 }
 
 function setup()
@@ -263,6 +377,8 @@ function setup()
                                 fi
                                 if [[ "$result" == "0" ]]; then
                                     echo "curl successfully installed."
+                                else
+                                    err_exit 1 "curl failed to install, exit code was \"$result\". Please install it first."
                                 fi
                                 ;;
                         * )
@@ -290,13 +406,9 @@ function setup()
 	. $local_conf
 
 	# Start setup
-	read -p "Incoming Webhook URL [$webhook_url]: " input_webhook_url
-	if [[ -z "$input_webhook_url" ]]; then
-		input_webhook_url=$webhook_url
-	fi
-	read -p "Upload Token [$upload_token]: " input_upload_token
-	if [[ -z "$input_upload_token" ]]; then
-		input_upload_token=$upload_token
+	read -p "Token [$token]: " input_token
+	if [[ -z "$input_token" ]]; then
+		input_token=$token
 	fi
 	read -p "Temporary Directory [$tmp_dir]: " input_tmp_dir
 	if [[ -z "$input_tmp_dir" ]]; then
@@ -322,20 +434,20 @@ function setup()
 	fi
 
 	cat <<- EOF | sed 's/^[[:space:]]*//' > "$local_conf"
-	webhook_url="$input_webhook_url"
-	upload_token="$input_upload_token"
+	webhook_url="$webhook_url"
+	token="$input_token"
 	tmp_dir="$input_tmp_dir"
 	channel="$input_channel"
 	username="$input_username"
 	icon="$input_icon"
 	attachment="$input_attachment"
-	EOF
+EOF
 }
 
 # ----------
 # Parse command line options
 # ----------
-function parse_args() 
+function parse_args()
 {
 	while [[ $# -gt 0 ]]; do
 		opt="$1"
@@ -348,6 +460,13 @@ function parse_args()
 				;;
 			-n|--no-buffering)
 				mode="no-buffering"
+				;;
+			--streaming)
+				mode="streaming"
+				;;
+			--streaming-batch-time)
+				streaming_batch_time="$1"
+				shift
 				;;
 			-f|--file)
 				mode="file"
@@ -372,6 +491,9 @@ function parse_args()
 				title="$1"
 				shift
 				;;
+			-q|--no-output)
+				no_output=1
+		                ;;
 			-d|--cond-prefix)
 				case "$1" in
 					-*|'')
@@ -403,12 +525,15 @@ function parse_args()
 				case "$1" in
 					none)
 						parseMode=', "parse": "none"'
+						parseModeUrlEncoded='parse=none'
 						;;
 					link_names)
 						parseMode=', "link_names": "1"'
+						parseModeUrlEncoded='link_names=1'
 						;;
 					full)
 						parseMode=', "parse": "full"'
+						parseModeUrlEncoded='parse=full'
 						;;
 					*)
 						err_exit 1 "Unknown message formatting option."
@@ -481,7 +606,7 @@ function parse_args()
 								# Found next command line option or empty. Error.
 								err_exit 1 "field value was not specified"
 								show_help
-								;;			   
+								;;
 							*)
 								field_title=$(escape_string "$1")
 								field_value=$(escape_string "$2")
@@ -515,10 +640,15 @@ function parse_args()
 # ---------
 # Read in our configurations
 # ---------
-function setup_environment() 
+function setup_environment()
 {
 	if [[ -e "/etc/slacktee.conf" ]]; then
 		. /etc/slacktee.conf
+	fi
+
+	# backwards compat
+	if [[ -z "$token" ]]; then
+		token="$upload_token"
 	fi
 
 	if [[ -n "$HOME" && -e "$HOME/.slacktee" ]]; then
@@ -536,7 +666,7 @@ function setup_environment()
 
 	# Overwrite upload_token if the environment variable SLACKTEE_TOKEN is set
 	if [[ "$SLACKTEE_TOKEN" != "" ]]; then
-		upload_token="$SLACKTEE_TOKEN"
+		token="$SLACKTEE_TOKEN"
 	fi
 
 	# Overwrite channel if it's specified in the command line option
@@ -568,18 +698,22 @@ function setup_environment()
 # ----------
 # Validate configurations
 # ----------
-function check_configuration() 
+function check_configuration()
 {
 	if [[ -z $(command -v curl) ]]; then
 		err_exit 1 "curl is not installed. Please install it first."
 	fi
 
-	if [[ $webhook_url == "" ]]; then
-		err_exit 1 "Please setup the webhook url of this incoming webhook integration."
+	if [[ $webhook_url == "" && $token == "" ]]; then
+		err_exit 1 "Please setup the authentication token or the incoming webhook url (deprecated)."
 	fi
 
-	if [[ $upload_token == "" && $mode == "file" ]]; then
+	if [[ $token == "" && $mode == "file" ]]; then
 		err_exit 1 "Please provide the authentication token for file uploads."
+	fi
+
+	if [[ $token == "" && $mode == "streaming" ]]; then
+		err_exit 1 "Please provide the authentication token for streaming."
 	fi
 
 	if [[ $channel == "" ]]; then
@@ -592,17 +726,24 @@ function check_configuration()
 		icon=${icon#:} # remove leading ':'
 		icon=${icon%:} # remove trailing ':'
 	fi
+
+	# Show deprecation warning
+	#if [[ $webhook_url != "" ]]; then
+	#    write_to_stderr "webhook_url is deprecated but still set. Recommend to remove it and use token instead."
+	#fi
 }
 
 # ----------
 # Start script
 # ----------
-function main() 
+function main()
 {
+        exit_code=0
+
 	parse_args "$@"
 	setup_environment
 	check_configuration
-        trap cleanup SIGINT SIGTERM SIGKILL
+	trap handle_signal SIGINT SIGTERM SIGKILL
 
 	text=""
 	if [[ -n "$title" || -n "$link" ]]; then
@@ -658,6 +799,12 @@ function main()
 
 	if [[ "$mode" == "buffering" ]]; then
 		send_message "$text"
+	elif [[ "$mode" == "streaming" ]]; then
+		# Unset last updated time for flashing buffer
+		unset streaming_last_update
+		# Use the latest matched color
+		found_pattern_color=$last_found_pattern_color
+		send_message "$text"
 	elif [[ "$mode" == "file" ]]; then
 		if [[ -s "$filename" ]]; then
 			channels_param=""
@@ -665,9 +812,12 @@ function main()
 				# Set channels for making the file public
 				channels_param="-F channels=$channel"
 			fi
-			result="$(curl -F file=@"$filename" -F token="$upload_token" $channels_param https://slack.com/api/files.upload 2> /dev/null)"
-			access_url="$(echo "$result" | awk 'match($0, /url_private":"([^"]*)"/) {print substr($0, RSTART+14, RLENGTH-15)}'|sed 's/\\//g')"
-			download_url="$(echo "$result" | awk 'match($0, /url_private_download":"([^"]*)"/) {print substr($0, RSTART+23, RLENGTH-24)}'|sed 's/\\//g')"
+			upload_result="$(curl -F file=@"$filename" -F token="$token" $channels_param https://slack.com/api/files.upload 2> /dev/null)"
+			if [ $(get_ok_in_response $upload_result) != "true" ]; then
+			    err_exit 1 $upload_result
+			fi
+			access_url="$(echo "$upload_result" | awk 'match($0, /url_private":"([^"]*)"/) {print substr($0, RSTART+14, RLENGTH-15)}'|sed 's/\\//g')"
+			download_url="$(echo "$upload_result" | awk 'match($0, /url_private_download":"([^"]*)"/) {print substr($0, RSTART+23, RLENGTH-24)}'|sed 's/\\//g')"
 			if [[ -n "$attachment" ]]; then
 				text="Input file has been uploaded"
 			else
@@ -681,5 +831,6 @@ function main()
 		# Clean up the temp file
 		cleanup
 	fi
+	exit $exit_code
 }
 main "$@"
