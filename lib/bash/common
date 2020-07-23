@@ -14,7 +14,12 @@ function update_slacktee(){
 
 # 1password-cli functions
 function opon() {
-  eval $(op signin my)
+  if [ $(( ${OP_SESSION_LIFETIME} - $( date +%s ) )) -lt 300 ];
+  then
+    eval $(op signin my)
+    unset OP_SESSION_LIFETIME
+    export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
+  fi
 }
 
 function opoff() {
@@ -23,24 +28,18 @@ function opoff() {
 }
 
 function op_listkeys() {
-  eval $(op signin my)
   op list items | jq | grep -i ssh-key | awk -F\: '{print $2}' | awk -F\" '{print $2}'
-  op signout
 }
 
 function op_addsshkey() {
-  eval $(op signin my)
-  echo "$(op get item "$1"-ssh-key |jq -r '.details.notesPlain')" | ssh-add -
+  echo "$(op get item "$1" |jq -r '.details.notesPlain')" | ssh-add -
 }
 
 function op_getsshkey() {
-  eval $(op signin my)
   echo "$(op get item "$1"-ssh-key |jq -r '.details.notesPlain')" | pbcopy
-  op signout
 }
 
 function op_getpubkey() {
-  eval $(op signin my)
   echo "$(op get item "$1" |jq -r '.details.notesPlain')" > /tmp/keytmp
   chmod 600 /tmp/keytmp
   ssh-keygen -f /tmp/keytmp -y | pbcopy
