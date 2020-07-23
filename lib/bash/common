@@ -22,6 +22,12 @@ function opoff() {
   unset OP_SESSION_my
 }
 
+function op_listkeys() {
+  eval $(op signin my)
+  op list items | jq | grep -i ssh-key | awk -F\: '{print $2}' | awk -F\" '{print $2}'
+  op signout
+}
+
 function op_addsshkey() {
   eval $(op signin my)
   echo "$(op get item "$1"-ssh-key |jq -r '.details.notesPlain')" | ssh-add -
@@ -152,6 +158,7 @@ function readfrom() {
 # Attempt to download Youtube video and make mp3 file from the audio
 function yt2mp3() {
     [ ! -e /usr/local/bin/youtube-dl ] && brew install youtube-dl
+    [ ! -e /usr/local/bin/ffmpeg ] && brew install ffmpeg
     if [ -z "$1" ]; then
         echo -e "\n!!! Youtube Link Please..."
         read -r ytlink
