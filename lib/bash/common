@@ -32,7 +32,7 @@ function op_listkeys() {
 }
 
 function op_addsshkey() {
-  echo "$(op get item "$1" |jq -r '.details.notesPlain')" | ssh-add -
+  echo "$(op get item "$1" |jq -r '.details.notesPlain')" | ssh-add -q -
 }
 
 function op_getsshkey() {
