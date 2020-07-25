@@ -16,15 +16,15 @@ function update_slacktee(){
 function opon() {
   if [ $(( ${OP_SESSION_LIFETIME} - $( date +%s ) )) -lt 300 ];
   then
-    eval $(op signin my)
-    unset OP_SESSION_LIFETIME
-    export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
+    export OP_SESSION_LIFETIME=0
+    eval $(op signin my) && export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
   fi
 }
 
 function opoff() {
   op signout
   unset OP_SESSION_my
+  unset OP_SESSION_LIFETIME
 }
 
 function op_listkeys() {
@@ -53,17 +53,11 @@ function update_op(){
 }
 
 function getpwd() {
-  eval $(op signin my)
   op get item "$1" |jq -r '.details.fields[] |select(.designation=="password").value' | pbcopy
-  op signout
 }
 
 function getmfa() {
-  eval $(op signin my)
   op get totp "$1" | pbcopy
-  op signout
-  sleep 30
-  pbcopy < /dev/null
 }
 
 # Inject new locations into the first position in $PATH
