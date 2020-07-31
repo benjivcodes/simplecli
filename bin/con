@@ -42,14 +42,14 @@ while true; do
       vpncheck
       bast_check
       shift;
-      /usr/bin/ssh -4 -t ${BASTION_PROD} -A -t /usr/bin/ssh -4 $1
+      /usr/bin/ssh -4 -t ${BASTION_PROD} -t /usr/bin/ssh -4 $1
       exit 1
     ;;
 
     -d)
       bast_check
       shift;
-      /usr/bin/ssh -4 -t ${BASTION_DEV} -A -t /usr/bin/ssh -4 $1
+      /usr/bin/ssh -4 -t ${BASTION_DEV} -t /usr/bin/ssh -4 $1
       exit 1
     ;;
 
