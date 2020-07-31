@@ -7,24 +7,26 @@ function update_slacktee(){
   pushd . >/dev/null || exit 1
   cd /tmp || exit1
   rm -f slacktee.sh
-  curl -s https://api.github.com/repos/coursehero/slacktee/releases/latest | jq '.zipball_url' | xargs wget -qic  -A ".zip" -O temp.zip && unzip -q -j -o -u temp.zip *slacktee.sh
+  curl -s https://api.github.com/repos/coursehero/slacktee/releases/latest \
+    | jq '.zipball_url' \
+    | xargs wget -qic  -A ".zip" -O temp.zip && unzip -q -j -o -u temp.zip ./*slacktee.sh
   mv slacktee.sh ${CLIHOME}/3rdparty/bin/slacktee
   popd >/dev/null || exit 1
 }
 
 # 1password-cli functions
 function opon() {
-  if [ $(( ${OP_SESSION_LIFETIME} - $( date +%s ) )) -lt 300 ];
-  then
-    export OP_SESSION_LIFETIME=0
-    eval $(op signin my) && export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
-  fi
+eval $(op signin my)
+export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
+echo -e "export OP_SESSION_my=${OP_SESSION_my}" > "/tmp/.login"
+echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}" >> "/tmp/.login"
 }
 
 function opoff() {
   op signout
   unset OP_SESSION_my
   unset OP_SESSION_LIFETIME
+  rm -f /tmp/.login
 }
 
 function op_listkeys() {
@@ -321,7 +323,7 @@ umask 022
 complete -cf sudo
 
 # Set shellcheck options
-export SHELLCHECK_OPTS="-x -e SC2145 -e SC2155 -e SC2154 -e SC2086 -e SC2046 -e SC2003 -e SC1090 -e SC1117 -e SC1090 -e SC1091 -e SC2059 -e SC2034 -e SC2002"
+export SHELLCHECK_OPTS="-x -e SC2145 -e SC2155 -e SC2154 -e SC2086 -e SC2046 -e SC2003 -e SC1090 -e SC1117 -e SC1090 -e SC1091 -e SC2059 -e SC2034 -e SC2002 -e SC2005 -e SC1001 -e SC2004"
 
 # Java Command Line Tools
 if [ -e /usr/libexec/java_home ]; then
