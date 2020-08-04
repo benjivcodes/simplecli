@@ -150,7 +150,7 @@ function op_getpubkey(){
   echo "$(op get item "$1" | jq -r '.details.notesPlain')" > "/tmp/keytmp"
   chmod 600 "/tmp/keytmp"
   ssh-keygen -f "/tmp/keytmp" -y | pbcopy
-  rm -f "/tmp/keytemp"
+  rm -f "/tmp/keytmp"
 }
 
 function getpwd(){
