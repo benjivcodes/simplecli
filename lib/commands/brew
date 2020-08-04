@@ -22,13 +22,13 @@ function brew_handle(){
   case $command in
   bootstrap)
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install findutils --with-default-names
-    brew install gnu-indent --with-default-names
-    brew install gnu-sed --with-default-names
-    brew install gnutls --with-default-names
-    brew install gnu-tar --with-default-names
-    brew install gawk --with-default-names
-    brew install coreutils --with-default-names
+    brew install findutils
+    brew install gnu-indent
+    brew install gnu-sed
+    brew install gnutls
+    brew install gnu-tar
+    brew install gawk
+    brew install coreutils
     brew install wget
     brew install terminal-notifier
     brew install popt
@@ -47,10 +47,10 @@ function brew_handle(){
   fix)
     pushd +0 . || exit 1
     cd /usr/local || exit 1
-    git remote add origin git://github.com/mxcl/homebrew.git
-    git fetch origin
-    git reset --hard origin/master
-    brew update
+    git remote add origin git://github.com/mxcl/homebrew.git > /dev/null 2>&1
+    git fetch origin > /dev/null 2>&1
+    git reset --hard origin/master > /dev/null 2>&1
+    brew update > /dev/null 2>&1
     popd || exit 1
   ;;
 
@@ -59,10 +59,9 @@ function brew_handle(){
   ;;
 
   update)
-    brew update
-    brew upgrade
-    brew cleanup
-    brew doctor
+    brew update > /dev/null 2>&1
+    brew upgrade > /dev/null 2>&1
+    brew cleanup > /dev/null 2>&1
   ;;
 
   multiuser)
@@ -73,7 +72,6 @@ function brew_handle(){
     sudo chmod -R g+w /Library/Caches/Homebrew
     sudo chgrp -R admin /opt
     sudo chmod -R g+w /opt
-    brew doctor
   ;;
 
 	*)
