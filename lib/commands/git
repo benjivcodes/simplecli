@@ -51,8 +51,8 @@ function git_handle(){
 
   delete-merged)
     git checkout master
-    git branch --merged | grep -vi master >/tmp/merged-branches
-    xargs git branch -d </tmp/merged-branches
+    git branch --merged | grep -vi master > "/tmp/merged-branches"
+    xargs git branch -d < "/tmp/merged-branches"
   ;;
 
   pbr)
