@@ -4,9 +4,7 @@
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export CLIHOME="${HOME}/.cli"
-
-# Load some completion scripts
-[ -f /usr/local//etc/bash_completion ] && source /usr/local/etc/bash_completion
+export LOGIN_TRACKER="/tmp/.login"
 
 PATH=${CLIHOME}/bin:${CLIHOME}/3rdparty/bin
 PATH=/usr/local/opt/openssl/bin:${PATH}
@@ -14,17 +12,31 @@ PATH=/usr/local/opt/curl/bin:${PATH}
 PATH=/usr/local/opt/coreutils/libexec/gnubin:${PATH}
 PATH=/usr/local/opt/gnu-getopt/bin:${PATH}
 PATH=/usr/local/opt/go/libexec/bin:${PATH}
+PATH=/usr/local/opt/grep/libexec/gnubin:${PATH}
+PATH=/usr/local/opt/gnu-getopt/bin:${PATH}
+PATH=/usr/local/opt/gnu-sed/libexec/gnubin:${PATH}
 PATH=${PATH}:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 
+# Setup some input pre-processing on less.
+export LESSOPEN="|lesspipe.sh %s"
+
+# Load some completion scripts
+if [ -f "/usr/local/etc/bash_completion" ]
+then
+  source "/usr/local/etc/bash_completion"
+fi
+
+# Let's make Homebrew a litte less chatty
+export HOMEBREW_USE_GCC=1
+export HOMEBREW_VERBOSE=1
+
 # Are we on macOS
-function darwinonly() {
-    if [ ! "$(uname -s)" == "Darwin" ]; then
-        echo ""
-        echo " This is macOS specific function, sorry."
-        echo ""
-        exit 1
-    fi
+function darwinonly(){
+  if [ ! "$(uname -s)" == "Darwin" ]; then
+    echo -e "\n This is macOS specific function, sorry.\n"
+    exit 1
+  fi
 }
 
 # Update slacktee
@@ -40,49 +52,49 @@ function update_slacktee(){
 }
 
 # 1password-cli functions
-function opon() {
+function opon(){
   eval $(op signin my)
   export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
-  echo -e "export OP_SESSION_my=${OP_SESSION_my}" > "/tmp/.login"
-  echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}" >> "/tmp/.login"
+  echo -e "export OP_SESSION_my=${OP_SESSION_my}" > "${LOGIN_TRACKER}"
+  echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}" >> "${LOGIN_TRACKER}"
 }
 
-function opoff() {
+function opoff(){
   op signout
   unset OP_SESSION_my
   unset OP_SESSION_LIFETIME
-  rm -f /tmp/.login
+  rm -f "${LOGIN_TRACKER}"
 }
 
-function op_listkeys() {
-  op list items | jq | grep -i ssh-key | awk -F\: '{print $2}'
+function op_listkeys(){
+  op list items | jq -r | grep -i ssh-key | awk -F\: '{print $2}'
 }
 
-function op_addsshkey() {
-  echo "$(op get item "$1" |jq -r '.details.notesPlain')" | ssh-add -q -
+function op_addsshkey(){
+  echo "$(op get item "$1" | jq -r '.details.notesPlain')" | ssh-add -q -
 }
 
-function op_getsshkey() {
-  echo "$(op get item "$1"-ssh-key |jq -r '.details.notesPlain')" | pbcopy
+function op_getsshkey(){
+  echo "$(op get item "$1" | jq -r '.details.notesPlain')" | pbcopy
 }
 
-function op_getpubkey() {
-  echo "$(op get item "$1" |jq -r '.details.notesPlain')" > /tmp/keytmp
-  chmod 600 /tmp/keytmp
-  ssh-keygen -f /tmp/keytmp -y | pbcopy
-  rm -f /tmp/keytemp
+function op_getpubkey(){
+  echo "$(op get item "$1" | jq -r '.details.notesPlain')" > "/tmp/keytmp"
+  chmod 600 "/tmp/keytmp"
+  ssh-keygen -f "/tmp/keytmp" -y | pbcopy
+  rm -f "/tmp/keytemp"
 }
 
-function getpwd() {
-  op get item "$1" |jq -r '.details.fields[] |select(.designation=="password").value' | pbcopy
+function getpwd(){
+  op get item "$1" | jq -r '.details.fields[] |select(.designation=="password").value' | pbcopy
 }
 
-function getmfa() {
+function getmfa(){
   op get totp "$1" | pbcopy
 }
 
-function update_op() {
-  cd /tmp || exit 1
+function update_op(){
+  cd "/tmp" || exit 1
   rm -f op_darwin*
   wget $(lynx -dump -listonly https://app-updates.agilebits.com/product_history/CLI \
     | grep ^"\ \ \ 2" \
@@ -91,115 +103,120 @@ function update_op() {
 }
 
 # Inject new locations into the first position in $PATH
-function pathmunge() {
-    if ! echo "$PATH" | grep -E -q "(^|:)$1($|:)"; then PATH="$1":"$PATH"; fi
- c}
+function pathmunge(){
+  if ! echo "$PATH" | grep -E -q "(^|:)$1($|:)"
+  then
+    PATH="$1":"$PATH"
+  fi
+}
 
 # Inject new locations into the first position in $MANPATH
-function manpathmunge() {
-    if ! echo "$MANPATH" | grep -E -q "(^|:)$1($|:)"; then MANPATH="$1":"$MANPATH"; fi
+function manpathmunge(){
+  if ! echo "$MANPATH" | grep -E -q "(^|:)$1($|:)"
+  then
+    MANPATH="$1":"$MANPATH"
+  fi
 }
 
 # Run a basic BaSH lint with shellcheck on a script
-function checkscript() {
-    /usr/local/bin/shellcheck -s bash "$1"
+function checkscript(){
+  /usr/local/bin/shellcheck -s bash "$1"
 }
 
 # A date function with standarized formatting
-function timestamp() {
-    date '+%Y-%m-%d %H:%M:%S'
+function timestamp(){
+  date '+%Y-%m-%d %H:%M:%S'
 }
 
 # Replace dashes with underscores
-function rdashes() {
-    for i in *-*; do
-        j="${i//-/_}"
-        mv "$i" "$j"
-    done
+function rdashes(){
+  for i in *-*; do
+    j="${i//-/_}"
+    mv "$i" "$j"
+  done
 }
 
 # Replace spaces with underscores
-function rspaces() {
-    for i in *" "*; do
-        j="${i// /_}"
-        mv "$i" "$j"
-    done
+function rspaces(){
+  for i in *" "*; do
+    j="${i// /_}"
+    mv "$i" "$j"
+  done
 }
 
 # Create a password encryped DMG from a folder on MacOS
-function dmgcrypt() {
-    darwinonly
-    local vol src
+function dmgcrypt(){
+  darwinonly
+  local vol src
 
-    if [ -z "$1" ]; then
-        echo -e "Volume name:"
-        read -r vol
-    else
-        vol="$1"
-    fi
+  if [ -z "$1" ]; then
+    echo -e "Volume name:"
+    read -r vol
+  else
+    vol="$1"
+  fi
 
-    if [ -z "$2" ]; then
-        echo -e "\nSource folder:"
-        read -r src
-    else
-        src="$2"
-    fi
+  if [ -z "$2" ]; then
+    echo -e "\nSource folder:"
+    read -r src
+  else
+    src="$2"
+  fi
 
-    echo -e "\n"
-    hdiutil create "$vol".dmg -ov -volname "$vol" \
-        -fs HFS+ -encryption AES-256 -stdinpass -srcfolder "$src"
+  echo -e "\n"
+  hdiutil create "$vol".dmg -ov -volname "$vol" \
+    -fs HFS+ -encryption AES-256 -stdinpass -srcfolder "$src"
 }
 
 # Create an unencryped DMG from a folder on MacOS
-function dmg() {
-    darwinonly
-    local vol src
+function dmg(){
+  darwinonly
+  local vol src
 
-    if [ -z "$1" ]; then
-        echo -e "Volume name:"
-        read -r vol
-    else
-        vol="$1"
-    fi
+  if [ -z "$1" ]; then
+    echo -e "Volume name:"
+    read -r vol
+  else
+    vol="$1"
+  fi
 
-    if [ -z "$2" ]; then
-        echo -e "\nSource folder:"
-        read -r src
-    else
-        src="$2"
-    fi
+  if [ -z "$2" ]; then
+    echo -e "\nSource folder:"
+    read -r src
+  else
+    src="$2"
+  fi
 
-    echo -e "\n"
-    hdiutil create "$vol".dmg -ov -volname "$vol" -fs HFS+ -srcfolder "$src"
+  echo -e "\n"
+  hdiutil create "$vol".dmg -ov -volname "$vol" -fs HFS+ -srcfolder "$src"
 }
 
 # Read from file so that you can iterate over each line
-function readfrom() {
-    while read -r line; do echo "$line"; done < "$1"
+function readfrom(){
+  while read -r line; do echo "$line"; done < "$1"
 }
 
 # Attempt to download Youtube video and make mp3 file from the audio
-function yt2mp3() {
-    [ ! -e /usr/local/bin/youtube-dl ] && brew install youtube-dl
-    [ ! -e /usr/local/bin/ffmpeg ] && brew install ffmpeg
-    if [ -z "$1" ]; then
-        echo -e "\n!!! Youtube Link Please..."
-        read -r ytlink
-        youtube-dl "$ytlink" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
-
-    else
-        ytlink="$1"
-        youtube-dl "$ytlink" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
-    fi
+function yt2mp3(){
+  [ ! -e /usr/local/bin/youtube-dl ] && brew install youtube-dl
+  [ ! -e /usr/local/bin/ffmpeg ] && brew install ffmpeg
+  if [ -z "$1" ]; then
+    echo -e "\n!!! Youtube Link Please..."
+    read -r ytlink
+    youtube-dl "$ytlink" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
+  else
+    ytlink="$1"
+    youtube-dl "$ytlink" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
+  fi
 }
 
 # Extract pubkey from pem file
-function sshpem2pub() {
-    ssh-keygen -y -f "$1"
+function sshpem2pub(){
+  ssh-keygen -y -f "$1"
 }
 
 # Simple color test
-function colortest() {
+function colortest(){
   echo -e "\033[0mCOLOR_NC (No color)"
   echo -e "\033[1;37mCOLOR_WHITE\t\033[0;30mCOLOR_BLACK"
   echo -e "\033[0;34mCOLOR_BLUE\t\033[1;34mCOLOR_LIGHT_BLUE"
@@ -212,7 +229,7 @@ function colortest() {
 }
 
 # Single use invocation of ClamScan
-function scanthis() {
+function scanthis(){
   darwinonly
   [ ! -e "/usr/local/bin/freshclam" ] && brew install clamav > /dev/null 2>&1
   echo -e "\n Updating virus definitions..."
@@ -222,73 +239,68 @@ function scanthis() {
 }
 
 # Remove the hidden file attribute
-function unhide() {
-    darwinonly
-    sudo chflags nohidden "$1"
-}
-
-# Move files with rsync
-function transfer() {
-    rsync -rauvPpz "$@"
+function unhide(){
+  darwinonly
+  sudo chflags nohidden "$1"
 }
 
 # Let's have some help working with relative paths; this should resolve the current location
 # of the script it's run from (yes, it's self referencing) even it's a symlink!
-function whereami() {
-    SOURCE="${BASH_SOURCE[0]}"
-    while [ -h "$SOURCE" ]; do
-        DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-        SOURCE="$(readlink "$SOURCE")"
-        [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-    done
+function whereami(){
+  SOURCE="${BASH_SOURCE[0]}"
+  while [ -h "$SOURCE" ]; do
     DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+  done
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 }
 
-function _git_prompt() {
-    local git_status="$(git status -unormal 2>&1)"
-    if ! [[ $git_status =~ Not\ a\ git\ repo ]]; then
-        if [[ $git_status =~ nothing\ to\ commit ]]; then
-            local ansi=$IGreen
-        elif [[ $git_status =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
-            local ansi=$IYellow
-        else
-            local ansi=$IRed
-        fi
-        if [[ $git_status =~ On\ branch\ ([^[:space:]]+) ]]; then
-            branch=${BASH_REMATCH[1]}
-            test "$branch" != master || branch='master'
-        else
-            # Detached HEAD.  (branch=HEAD is a faster alternative.)
-            branch="$(git describe --all --contains --abbrev=4 HEAD 2> /dev/null || echo HEAD)"
-        fi
-        echo -n "\[$ansi\]""(""$branch"")""\[$Color_Off\]"
+function _git_prompt(){
+  local git_status="$(git status -unormal 2>&1)"
+  if ! [[ $git_status =~ Not\ a\ git\ repo ]]; then
+   if [[ $git_status =~ nothing\ to\ commit ]]; then
+      local ansi=$IGreen
+    elif [[ $git_status =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
+      local ansi=$IYellow
+    else
+      local ansi=$IRed
     fi
+    if [[ $git_status =~ On\ branch\ ([^[:space:]]+) ]]; then
+      branch=${BASH_REMATCH[1]}
+      test "$branch" != master || branch='master'
+    else
+      # Detached HEAD.  (branch=HEAD is a faster alternative.)
+      branch="$(git describe --all --contains --abbrev=4 HEAD 2> /dev/null || echo HEAD)"
+    fi
+    echo -n "\[$ansi\]""(""$branch"")""\[$Color_Off\]"
+  fi
 }
 
-function _prompt_command() {
-    PS1="\[$IRed\][\h]\[$IRed\][\[$Blue\]\u\[$IPurple\]::\W\[$IRed\]]\[$IGreen\]\$ \[$Color_Off\]"
+function _prompt_command(){
+  PS1="\[$IRed\][\h]\[$IRed\][\[$Blue\]\u\[$IPurple\]::\W\[$IRed\]]\[$IGreen\]\$ \[$Color_Off\]"
 }
 
 # How long is the cert valid?
-function cert-valid-until() {
-    /usr/local/opt/openssl/bin/openssl x509 -dates -noout -in $1
+function cert-valid-until(){
+  /usr/local/opt/openssl/bin/openssl x509 -dates -noout -in $1
 }
 
-function appify() {
-    darwinonly
-    appname=${2:-$(basename "$1" ".sh")}
-    dir="${appname}.app/Contents/MacOS"
+function appify(){
+ darwinonly
+ appname=${2:-$(basename "$1" ".sh")}
+ dir="${appname}.app/Contents/MacOS"
 
-    if [ -a "${appname}.app" ]; then
-        echo "$PWD/${appname}.app already exists :("
-        exit 1
-    fi
+ if [ -a "${appname}.app" ]; then
+   echo "$PWD/${appname}.app already exists :("
+   exit 1
+ fi
 
-    mkdir -p "${dir}"
-    cp "$1" "${dir}/${appname}"
-    chmod +x "${dir}/${appname}"
+ mkdir -p "${dir}"
+ cp "$1" "${dir}/${appname}"
+ chmod +x "${dir}/${appname}"
 
-    echo "${PWD}/${appname}.app"
+ echo "${PWD}/${appname}.app"
 }
 
 # Set some aliases
@@ -299,8 +311,6 @@ alias rm='rm -i'
 alias sudo='sudo -H'
 alias vi='/usr/bin/vim'
 alias vim='/usr/bin/vim'
-alias subl="/usr/bin/open -a 'Sublime Text'"
-alias kvadd="kvset"
 alias grep='grep --color'
 
 # Turn the Vagrant gui off
@@ -314,7 +324,7 @@ EDITOR="/usr/bin/vim"
 export EDITOR VISUAL="${EDITOR}" SVN_EDITOR="${EDITOR}"
 
 # Set some behavior reguarding history.
-export HISTFILE=~/.bash_history
+export HISTFILE="${HOME}/.bash_history"
 export HISTSIZE=100000
 export HISTCONTROL=ignoreboth
 export HISTTIMEFORMAT="%F %T "
@@ -336,19 +346,19 @@ umask 022
 complete -cf sudo
 
 # Set shellcheck options
-export SHELLCHECK_OPTS="-x -e SC2145 -e SC2155 -e SC2154 -e SC2086 -e SC2046 -e SC2003 -e SC1090 -e SC1117 -e SC1090 -e SC1091 -e SC2059 -e SC2034 -e SC2002 -e SC2005 -e SC1001 -e SC2004"
+export SHELLCHECK_OPTS="-x -e SC2145 -e SC2155 -e SC2154 -e SC2086 -e SC2046 -e SC2003 -e SC1090 -e SC1117 -e SC1090 -e SC1091 -e SC2059 -e SC2034 -e SC2002 -e SC2005 -e SC1001 -e SC2004 -e SC1091"
 
 # Java Command Line Tools
 if [ -e /usr/libexec/java_home ]; then
-    darwinonly
-    JAVA_HOME=$(/usr/libexec/java_home)
-    export JAVA_HOME
+  darwinonly
+  JAVA_HOME=$(/usr/libexec/java_home)
+  export JAVA_HOME
 fi
 
 # Go settings
 if [ "$(uname -s)" == "Darwin" ]; then
     export GOROOT="/usr/local/opt/go/libexec"
-    export GOPATH="${HOME}/.cli/lib/go"
+    export GOPATH="${CLIHOME}/lib/go"
 else
     export GOPATH=/usr/share/go/
 fi
@@ -429,6 +439,3 @@ On_IWhite='\e[0;107m'  # White
 
 export CLICOLOR=1
 ### End BaSH Colors ###
-
-# Setup some input pre-processing on less.
-export LESSOPEN="|lesspipe.sh %s"
