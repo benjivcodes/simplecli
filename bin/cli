@@ -8,11 +8,11 @@ fi
 
 bold=$(tput bold)
 normal=$(tput sgr0)
-cli_lib="${CLIHOME}/lib"
-command_dir="${CLIHOME}/lib/commands"
+cli_lib="/usr/local/lib/simplecli"
+command_dir="${cli_lib}/commands"
 available_commands=()
 
-source_commands() {
+function source_commands(){
   for c in $(/bin/ls ${command_dir}); do
     available_commands+=("${c}")
   done
@@ -22,7 +22,7 @@ source_commands() {
   done
 }
 
-handle_command() {
+function handle_command(){
   source_commands
 
   if [[ $# -lt 1 ]]; then
@@ -34,7 +34,7 @@ handle_command() {
   fi
 }
 
-usage() {
+function usage(){
   echo -e "  usage: $(basename "$0") <command> <subcommand> [parameters]\n"
   echo -e "  To see help text, you can run:\n"
   echo -e "  cli help"
@@ -42,7 +42,7 @@ usage() {
   echo -e "  cli <subcommand> help"
 }
 
-help() {
+function help(){
   echo "  A simple command line based extensible toolchain for MacOS."
   echo ""
   usage

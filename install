@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+cd $(dirname "${BASH_SOURCE[0]}")
+DIR="$(pwd)"
+INSTALL_DIR="/usr/local"
+
+function install() {
+  mkdir -p "${INSTALL_DIR}/bin"
+  mkdir -p "${INSTALL_DIR}/lib/simplecli"
+  rsync -azh "${DIR}/bin/" "${INSTALL_DIR}/bin/"
+  rsync -azh "${DIR}/3rdparty/" "${INSTALL_DIR}/bin/"
+  rsync -azh "${DIR}/lib/" "${INSTALL_DIR}/lib/simplecli/"
+
+  if [[ -d "${DIR}/.git" ]]; then
+    rsync -azh "${DIR}/.git" "${INSTALL_DIR}/lib/simplecli/"
+  fi
+
+  echo "SimpleCLI successfully installed"
+}
+
+# process script flags/parameters
+shift
+for i in "$@"; do
+  case "${i}" in
+    --install-dir)
+      shift
+      INSTALL_DIR="${1}"
+      shift
+    ;;
+    --symlink)
+      SYMLINK="true"
+      shift
+    ;;
+  esac
+done
+
+install
