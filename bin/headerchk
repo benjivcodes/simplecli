@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
+
 # Clone and checkout master branch of MHA, then launch the webapp for use.
 # MHA https://github.com/lnxg33k/email-header-analyzer
 
+# Let's keep the current working directory safe
 pushd +0 . || exit 1
 
-# Launch the Mail Header Analyzer (MHA)
-cd ${HOME} || exit 1
+# Fetch Mail Header Analyzer (MHA)
+cd /tmp || exit 1
 rm -fr mailheaderanalyzer
 mkdir mailheaderanalyzer
 git clone https://github.com/lnxg33k/email-header-analyzer.git mailheaderanalyzer
 
-cd ${HOME}/.cli/3rdparty/mailheaderanalyzer/ || exit 1
-git checkout master
-git pl
+# Install Python requirements
+cd /tmp/mailheaderanalyzer || exit 1
+pip install -r requirements.txt
+
+# Launch MHA flask server
+cd /tmp/mailheaderanalyzer/mha || exit 1
 python server.py -d
 
+# Return us to the working directory on exit
 popd || exit 1
