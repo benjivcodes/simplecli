@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
+
 # Encrypt/decrypt a file with openssl.
 # Create an encrypted dmg on the desktop.
+
+# Requires an ENCRYPTION_PWD to be set from 1password-cli
+ENCRYPTION_PWD=$(getpwd dmg_encryption-key)
 
 function passwd_check(){
   if [[ -z "${ENCRYPTION_PWD}" ]]; then
