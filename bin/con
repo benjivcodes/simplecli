@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 # Connect to variety of hosts by location/type.
 
-# Disclaimer: while support for VPNS exists this is in no way supported
-# or endorsed by or IT Support. This script will not bypass any protections
-# or policy put in place on managed networks.
+# Disclaimer: while support for corporate VPNS exists this is in no way supported
+# or endorsed by IT Support. This script will not bypass any protections
+# or policies put in place on managed networks.
+
+# Requires the following environment variables to be set or set+renamed:
+# BASTION_DEV == the bastion host used to access the non-prod environment
+# BASTION_PROD == the bastion used to access the production environment
+# VPN_DEFAULT_GW == the default gateway/route that should be present when connected
 
 function bast_check(){
   if [[ -z "${BASTION_DEV}" || -z "${BASTION_PROD}" ]]; then
       echo -e "\nExpected BASTION_DEV and BASTION_PROD environment to be set, exiting!"
+      exit 1
   fi
 }
 
@@ -27,7 +33,7 @@ function con_help(){
 
 # Support for vpns via BigIP client.
 function vpncheck(){
-  /usr/sbin/netstat -nr -f inet | grep -i ^default | grep -i ${VPN_DEFAULT_GW} -q
+  /usr/sbin/netstat -nr -f inet | grep -i ^default | grep -i -q ${VPN_DEFAULT_GW}
   status="$?"
   if [ $status -gt 0 ];
   then
