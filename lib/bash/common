@@ -120,10 +120,17 @@ function update_slacktee(){
 
 # 1password-cli functions
 function opon(){
-  eval $(op signin my)
-  export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
-  echo -e "export OP_SESSION_my=${OP_SESSION_my}" > "${LOGIN_TRACKER}"
-  echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}" >> "${LOGIN_TRACKER}"
+  source "${LOGIN_TRACKER}"
+  if [ $(( ${OP_SESSION_LIFETIME} - $(date +%s) )) -lt 30 ]
+  then
+    eval $(op signin my)
+    export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
+    echo -e "export OP_SESSION_my=${OP_SESSION_my}" > "${LOGIN_TRACKER}"
+    echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}" >> "${LOGIN_TRACKER}"
+    source "${LOGIN_TRACKER}"
+  else
+    echo -e "1password-cli session close to expiration but still valid"
+  fi
 }
 
 function opoff(){
@@ -134,18 +141,22 @@ function opoff(){
 }
 
 function op_listkeys(){
+  opon
   op list items | jq -r | grep -i ssh-key | awk -F\: '{print $2}'
 }
 
 function op_addsshkey(){
+  opon
   echo "$(op get item "$1" | jq -r '.details.notesPlain')" | ssh-add -q -
 }
 
 function op_getsshkey(){
+  opon
   echo "$(op get item "$1" | jq -r '.details.notesPlain')" | pbcopy
 }
 
 function op_getpubkey(){
+  opon
   echo "$(op get item "$1" | jq -r '.details.notesPlain')" > "/tmp/keytmp"
   chmod 600 "/tmp/keytmp"
   ssh-keygen -f "/tmp/keytmp" -y | pbcopy
@@ -153,14 +164,17 @@ function op_getpubkey(){
 }
 
 function getpwd(){
+  opon
   op get item "$1" | jq -r '.details.fields[] |select(.designation=="password").value' | pbcopy
 }
 
 function getmfa(){
+  opon
   op get totp "$1" | pbcopy
 }
 
 function update_op(){
+  opoff
   cd "/tmp" || exit 1
   rm -f op_darwin*
   wget $(lynx -dump -listonly https://app-updates.agilebits.com/product_history/CLI \
