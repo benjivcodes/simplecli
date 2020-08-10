@@ -27,10 +27,6 @@ for i in "$@"; do
       INSTALL_DIR="${1}"
       shift
     ;;
-    --symlink)
-      SYMLINK="true"
-      shift
-    ;;
   esac
 done
 
