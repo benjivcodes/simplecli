@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 # Clone and checkout master branch of MHA, then launch the webapp for use.
 # MHA https://github.com/lnxg33k/email-header-analyzer
 

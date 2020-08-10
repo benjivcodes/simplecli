@@ -10,13 +10,6 @@
 # BASTION_PROD == the bastion used to access the production environment
 # VPN_DEFAULT_GW == the default gateway/route that should be present when connected
 
-function bast_check(){
-  if [[ -z "${BASTION_DEV}" || -z "${BASTION_PROD}" ]]; then
-      echo -e "\nExpected BASTION_DEV and BASTION_PROD environment to be set, exiting!"
-      exit 1
-  fi
-}
-
 function con_help(){
   echo ""
   echo " Connect to a variety of hosts by location/type. Please read DISCLAIMER"
@@ -31,8 +24,23 @@ function con_help(){
   exit 1
 }
 
+# Check for a valid bastion.
+function bastcheck(){
+  if [[ -z "${BASTION_DEV}" || -z "${BASTION_PROD}" ]]
+  then
+    echo -e "\nExpected BASTION_DEV and BASTION_PROD environment to be set, exiting!"
+    exit 1
+  fi
+}
+
 # Support for vpns via BigIP client.
 function vpncheck(){
+  if [[ -z "s{VPN_DEFAULT_GW}" ]]
+  then
+    echo -e "\nExpected VPN_DEFAULT_GW to be set, exiting!"
+    exit 1
+  fi
+
   /usr/sbin/netstat -nr -f inet | grep -i ^default | grep -i -q ${VPN_DEFAULT_GW}
   status="$?"
   if [ $status -gt 0 ];
@@ -46,14 +54,14 @@ while true; do
   case "$1" in
     -p)
       vpncheck
-      bast_check
+      bastcheck
       shift;
       /usr/bin/ssh -4 -t ${BASTION_PROD} -t /usr/bin/ssh -4 $1
       exit 1
     ;;
 
     -d)
-      bast_check
+      bastcheck
       shift;
       /usr/bin/ssh -4 -t ${BASTION_DEV} -t /usr/bin/ssh -4 $1
       exit 1
@@ -66,7 +74,7 @@ while true; do
     ;;
 
     -b)
-      bast_check
+      bastcheck
       shift;
       if [ "$1" == "dev" ]
       then
@@ -80,6 +88,11 @@ while true; do
       ;;
 
     -h)
+      con_help
+      exit 1
+    ;;
+
+    *)
       con_help
       exit 1
     ;;

@@ -35,14 +35,17 @@ function handle_command(){
 }
 
 function usage(){
+  echo -e " "
   echo -e "  usage: $(basename "$0") <command> <subcommand> [parameters]\n"
   echo -e "  To see help text, you can run:\n"
   echo -e "  cli help"
   echo -e "  cli <command> help"
   echo -e "  cli <subcommand> help"
+  echo -e " "
 }
 
 function help(){
+  echo ""
   echo "  A simple command line based extensible toolchain for MacOS."
   echo ""
   usage
