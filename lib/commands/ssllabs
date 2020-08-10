@@ -8,19 +8,35 @@ function ssllabs_description(){
 function ssllabs_help(){
   echo -e "\n usage: $(basename "$0") ssllabs <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS: \n"
-  echo " <target>     Scans <target> site and returns grade"
+  echo " -t     Scans <target> site and returns grade"
   echo ""
 }
 
 function ssllabs_handle(){
-  if [[ -z "${GOROOT}" || -z "${GOPATH}" ]]; then
-    echo ""
-    echo " No GO environment detected, exiting..."
-    echo ""
-  fi
+  command="$1"
 
-  echo ""
-  echo "This may take a while if results are older than 12 hours..."
-  echo ""
-  ssllabs-scan-v3 -usecache -maxage 12 -grade "$1"
+  case "$command" in
+    -t)
+    shift;
+    if [[ -z "${GOROOT}" || -z "${GOPATH}" ]]; then
+      echo ""
+      echo " No GO environment detected, exiting..."
+      echo ""
+    fi
+    
+    echo ""
+    echo "This may take a while if results are older than 12 hours..."
+    echo ""
+    ssllabs-scan-v3 -usecache -maxage 12 -grade "$1"
+    ;;
+
+    help)
+      ssllabs_help
+    ;;
+
+    *)
+      ssllabs_help
+    ;;
+ esac 
 }
+

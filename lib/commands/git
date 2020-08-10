@@ -8,11 +8,12 @@ function git_description(){
 function git_help(){
   echo -e "\n usage: $(basename "$0") git <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS:\n"
-  echo " info             Display some basic info about the git repo"
-  echo " push-branch      Push the current branch checkout"
-  echo " new-branch       Make a new branch from the current master"
-  echo " delete-merged    Attempt to delete local copies of merged branches"
-  echo " pbr              Attempt to delete local copies of gone branches"
+  echo " info             display some basic info about the git repo"
+  echo " push-branch      push the current branch checkout"
+  echo " new-branch       make a new branch from the current master"
+  echo " delete-merged    attempt to delete local copies of merged branches"
+  echo " pbr              attempt to delete local copies of gone branches"
+  echo " help             this message"
   echo ""
 }
 
@@ -22,9 +23,10 @@ function git_handle(){
   case $command in
   info)
     pushd . >/dev/null || exit 1
+    clear
     while [ ! -d .git ] && [ ! "$(pwd)" = "/" ]; do cd ..; done
     if [ -d .git ]; then
-      echo -e "== Remote URL:\n$(git remote -v)\n"
+      echo -e "\n== Remote URL:\n$(git remote -v)\n"
       echo -e "== Remote Branches:\n$( git branch -r)\n"
       echo -e "== Local Branches:\n$( git branch)\n"
       echo -e "== Configuration (.git/config):\n$( cat .git/config)\n"
@@ -51,12 +53,17 @@ function git_handle(){
 
   delete-merged)
     git checkout master
+    git pull
     git branch --merged | grep -vi master > "/tmp/merged-branches"
     xargs git branch -d < "/tmp/merged-branches"
   ;;
 
   pbr)
     git branch -vv | grep 'origin/.*: gone]' | awk '{print $1}' | xargs git branch -D
+  ;;
+
+  help)
+    git_help
   ;;
 
   *)

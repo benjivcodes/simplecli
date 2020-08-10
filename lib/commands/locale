@@ -8,12 +8,13 @@ function locale_description(){
 function locale_help(){
   echo -e "\n usage: $(basename "$0") locale <subcommand>\n"
   echo -e "\n AVAILABLE SUBCOMMANDS:\n"
-  echo " set [locale]   Set the macOS network location"
-  echo " get            Get the macOS network location"
-  echo " noarp          Disable unicast arp"
-  echo " noipv6         Disable IPV6 support"
-  echo " name           Set the system hostname"
-  echo " noguest        Disable Guest login"
+  echo " set [locale]   set the macOS network location"
+  echo " get            get the macOS network location"
+  echo " noarp          disable unicast arp"
+  echo " noipv6         disable IPV6 support"
+  echo " sethostname    set the system hostname"
+  echo " noguest        disable Guest login"
+  echo " help           help"
   echo ""
 }
 
@@ -33,17 +34,25 @@ function locale_handle(){
   ;;
 
   noarp)
-    sudo sysctl -w net.link.ether.inet.arp_unicast_lim=0 2> /dev/null
-    echo "net.link.ether.inet.arp_unicast_lim=0" | sudo tee -a /etc/sysctl.conf 2> /dev/null
-    sudo chown root:wheel /etc/sysctl.conf
-    sudo chmod 644 /etc/sysctl.conf
+    sudo sysctl -w net.link.ether.inet.arp_unicast_lim=0 > /dev/null 2>&1
+    echo "net.link.ether.inet.arp_unicast_lim=0" | sudo tee -a "/etc/sysctl.conf" > /dev/null 2>&1
+    sudo chown root:wheel "/etc/sysctl.conf"
+    sudo chmod 644 "/etc/sysctl.conf"
   ;;
 
   noipv6)
-    networksetup -listallnetworkservices | while read -r i; do SUPPORT=$(networksetup -getinfo "$i" | grep "IPv6: Automatic") && if [ -n "$SUPPORT" ]; then networksetup -setv6off "$i"; fi; done;
+    networksetup -listallnetworkservices \
+    | while read -r i
+      do 
+        SUPPORT=$(networksetup -getinfo "$i" | grep "IPv6: Automatic")
+        if [ -n "$SUPPORT" ]
+        then
+          sudo networksetup -setv6off "$i"
+        fi
+      done;
   ;;
 
-  name)
+  sethostname)
     shift
     sudo scutil --set LocalHostName "$1"
     sudo scutil --set ComputerName "$1"

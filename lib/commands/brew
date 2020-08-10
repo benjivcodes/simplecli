@@ -13,6 +13,7 @@ function brew_help(){
   echo " remove      Remove Homebrew from the system"
   echo " update      Update and cleanup the Homebrew installation"
   echo " multiuser   Attempt to make Homebrew multiuser"
+  echo " help        this message"
 	echo ""
 }
 
@@ -20,25 +21,16 @@ function brew_handle(){
   command="$1"
 
   case $command in
+  install)
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+  ;;
+
   bootstrap)
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install findutils
-    brew install gnu-indent
-    brew install gnu-sed
-    brew install gnutls
-    brew install gnu-tar
-    brew install gawk
-    brew install coreutils
-    brew install wget
-    brew install terminal-notifier
-    brew install popt
-    brew install boost
-    brew install bash-completion
-    brew install shellcheck
-    brew install lesspipe
-    brew install jq
-    brew install shfmt
-    brew install golang
+    for p in $(cat "${CLIHOME}/brew_bootstrap_packages.txt")
+    do
+      brew install "${p}"
+    done
+
     brew cask install android-sdk
     brew cask install android-platform-tools
     brew cask install java
@@ -61,21 +53,21 @@ function brew_handle(){
   update)
     brew update > /dev/null 2>&1
     brew upgrade > /dev/null 2>&1
-    brew cleanup > /dev/null 2>&1
+    brew cleanup
   ;;
 
   multiuser)
     echo -e "\nYou will need to add users to the group 'admin'"
-    sudo chgrp -R admin /usr/local/*
-    sudo chmod -R g+w /usr/local/*
-    sudo chgrp -R admin /Library/Caches/Homebrew
-    sudo chmod -R g+w /Library/Caches/Homebrew
-    sudo chgrp -R admin /opt
-    sudo chmod -R g+w /opt
+    sudo chgrp -R admin /opt /usr/local/* /Library/Caches/Homebrew
+    sudo chmod -R g+w /opt /usr/local/* /Library/Caches/Homebrew
   ;;
 
-	*)
+  help)
 		brew_help
 	;;
+
+  *)
+    brew_help
+  ;;
   esac
 }

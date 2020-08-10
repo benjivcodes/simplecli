@@ -6,7 +6,7 @@ function android_description(){
 }
 
 function android_help(){
-  echo -e "\n usage: $(basename "$0") homebrew <subcommand>"
+  echo -e "\n usage: $(basename "$0") android <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS:\n"
   echo " unlock      Unlock the Boot Loader"
   echo " auto        Perform automated firmware install"
@@ -14,6 +14,7 @@ function android_help(){
   echo " lock        Lock the Boot Loader"
   echo " fetch       Get the latest Factory and OTA images"
   echo " ota         Peform an OTA firmware image install"
+  echo " help        this message"
 	echo ""
 }
 
@@ -50,10 +51,8 @@ function android_handle(){
   ;;
 
   fetch)
-    echo ""
-    echo "You can get the latest Factory Images from https://developers.google.com/android/images"
-    echo "You can get Full OTA Images from https://developers.google.com/android/ota"
-    echo ""
+    echo -e "\nYou can get the latest Factory Images from https://developers.google.com/android/images"
+    echo -e "You can get Full OTA Images from https://developers.google.com/android/ota\n"
   ;;
 
   ota)
@@ -69,8 +68,12 @@ function android_handle(){
     adb sideload "${otafile}"
   ;;
 
-  *)
+  help)
 		android_help
 	;;
+
+  *)
+    android_help
+  ;;
   esac
 }

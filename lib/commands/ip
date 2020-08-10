@@ -7,9 +7,10 @@ function ip_description(){
 function ip_help(){
   echo -e "\n usage: $(basename "$0") ip <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS:\n"
-  echo " external     Get the visible external IPv4 Address"
-  echo " local        Get the local device and IPv4 Address"
-  echo " validate     Confirm a string 'looks' like an IPv4 Address"
+  echo " remote       get the visible external IPv4 Address"
+  echo " local        get the local device and IPv4 Address"
+  echo " validate     confirm a string 'looks' like an IPv4 Address"
+  echo " help         this message"
   echo ""
 }
 
@@ -17,19 +18,15 @@ function ip_handle(){
   command="$1"
 
   case $command in
-  external)
+  remote)
     exip="$(curl -s 'https://api.ipify.org?format=text')"
-    echo ""
     echo -e "\nExternal visible IPv4 Address: ${exip}\n"
-    echo ""
   ;;
 
   local)
-    echo ""
-    echo -e "Local IPv4 addresses:"
+    echo -e "\nLocal IPv4 addresses:"
     ifconfig | grep -iw 'inet' | grep -Ev '127.0.0.1|::1' | awk '{print $2}'
-    echo ""
-    echo -e "Local IPv6 addresses:"
+    echo -e "\nLocal IPv6 addresses:"
     ifconfig | grep -iw 'inet6' | grep -Ev '127.0.0.1|::1' | awk '{print $2}'
     echo ""
   ;;
@@ -38,11 +35,16 @@ function ip_handle(){
     shift;
     ip="$1"
 
-    if [[ ! $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    if [[ ! ${ip} =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
       echo ""
-      echo "$ip: does not appear to be a valid dotted quad."
-      echo ""
+      echo -e "\n${ip}: does not appear to be a valid dotted quad.\n"
+    else
+      echo -e "\n${ip}: appears to be a valid dotted quad.\n"
     fi
+  ;;
+
+  help)
+    ip_help
   ;;
 
   *)

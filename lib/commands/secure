@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# Encrypt/decrypt a file with openssl.
+# Create an encrypted dmg on the desktop.
+
+# Load the SimpleCLI 1password-cli functions
+source "/usr/local/lib/simplecli/bash/1passwd-cli"
+
+function secure_description(){
+    echo "Secure file and dmg operations using openssl/hdiutil."
+}
+
+function passwdcheck(){
+  # Requires an ENCRYPTION_PWD to be set from 1password-cli
+  ENCRYPTION_PWD=$(getpwd dmg_encryption-key)
+
+  if [[ -z "${ENCRYPTION_PWD}" ]]; then
+      echo -e "\nExpected ENCRYPTION_PWD environment to be set, exiting!"
+  fi
+}
+
+function secure_help(){
+  echo ""
+  echo " Create an ecrypted file/dmg from unecrypted source."
+  echo " Decrypt source file to unencrypted version."
+  echo ""
+  echo " -i create ecnrypted dmg; takes source file as argument"
+  echo " -e create encrypted file; takes source file as argument"
+  echo " -d decrypte file; takes source file as argument"
+  echo " -h displays this help"
+  echo ""
+  exit 1
+}
+
+function secure_handle(){
+  command="$1"
+
+  case "$command" in
+    -h)
+      secure_help
+      exit 1
+    ;;
+
+    -i)
+      shift;
+      if [ -z $1 ];
+      then
+        echo -e "\nNo input or output file specified. Exiting."
+        exit 1
+      else
+        hdiutil create -encryption -stdinpass -srcfolder "$1" "$1_encrypted.dmg"
+        mv "$1_encrypted.dmg" "${HOME}/Desktop"
+      fi
+
+      exit 1
+    ;;
+
+    -e)
+      passwdcheck
+      shift;
+      if [ -z $1 ];
+      then
+        echo -e "\nNo input or output file specified. Exiting."
+        exit 1
+      else
+        openssl aes-256-cbc -salt -a -e -in "$1" -out "$1".enc -k "${ENCRYPTION_PWD}"
+      fi
+
+      exit 1
+    ;;
+
+    -d)
+      passwdcheck
+      shift;
+      if [ -z $1 ];
+      then
+        echo -e "\nNo input or output file specified. Exiting."
+        exit 1
+      else
+        openssl aes-256-cbc -salt -a -e -d -in "$1" -out $(basename -s .enc "$1") -k "${ENCRYPTION_PWD}"
+      fi
+
+      exit 1
+    ;;
+
+    help)
+      secure_help
+    ;;
+
+    *)
+      secure_help
+    ;;
+  esac
+}

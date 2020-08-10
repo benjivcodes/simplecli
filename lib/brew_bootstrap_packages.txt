@@ -1,0 +1,17 @@
+findutils
+gnu-indent
+gnu-sed
+gnutls
+gnu-tar
+gawk
+coreutils
+wget
+terminal-notifier
+popt
+boost
+bash-completion
+shellcheck
+lesspipe
+jq
+shfmt
+golang
