@@ -1,4 +1,5 @@
 findutils
+ghc
 gnu-indent
 gnu-sed
 gnutls

@@ -19,56 +19,59 @@ function locale_help(){
 }
 
 function locale_handle(){
+  local SUPPORT SERIALNUM
   command="$1"
 
   case $command in
+    set)
+      shift;
+      echo -e "\n Setting location to $1 Location..\n"
+      sudo networksetup -switchtolocation "$1"
+    ;;
 
-  set)
-    shift;
-    echo -e "\n Setting location to $1 Location..\n"
-    sudo networksetup -switchtolocation "$1"
-  ;;
+    get)
+      echo -e "\nYou are in the $(networksetup -getcurrentlocation) Location.\n"
+    ;;
 
-  get)
-    echo -e "\n You are in the $(networksetup -getcurrentlocation) Location.\n"
-  ;;
+    noarp)
+      sudo sysctl -w net.link.ether.inet.arp_unicast_lim=0 > /dev/null 2>&1
+      echo "net.link.ether.inet.arp_unicast_lim=0" | sudo tee -a "/etc/sysctl.conf" > /dev/null 2>&1
+      sudo chown root:wheel "/etc/sysctl.conf"
+      sudo chmod 644 "/etc/sysctl.conf"
+    ;;
 
-  noarp)
-    sudo sysctl -w net.link.ether.inet.arp_unicast_lim=0 > /dev/null 2>&1
-    echo "net.link.ether.inet.arp_unicast_lim=0" | sudo tee -a "/etc/sysctl.conf" > /dev/null 2>&1
-    sudo chown root:wheel "/etc/sysctl.conf"
-    sudo chmod 644 "/etc/sysctl.conf"
-  ;;
+    noipv6)
+      networksetup -listallnetworkservices \
+      | while read -r i
+        do 
+          SUPPORT=$(networksetup -getinfo "$i" | grep "IPv6: Automatic")
+          if [ -n "${SUPPORT}" ]
+          then
+            sudo networksetup -setv6off "$i"
+          fi
+        done;
+    ;;
 
-  noipv6)
-    networksetup -listallnetworkservices \
-    | while read -r i
-      do 
-        SUPPORT=$(networksetup -getinfo "$i" | grep "IPv6: Automatic")
-        if [ -n "$SUPPORT" ]
-        then
-          sudo networksetup -setv6off "$i"
-        fi
-      done;
-  ;;
+    sethostname)
+      shift
+      sudo scutil --set LocalHostName "$1"
+      sudo scutil --set ComputerName "$1"
+      sudo scutil --set HostName "$1"
+      SERIALNUM=$(ioreg -l | awk '/IOPlatformserialNumber/ { split($0, line, "\""); printf("%s\n", line[4]); }')
+      sudo defaults write "/Library/Preferences/SystemConfiguration/com.apple.smb.server" NetBIOSName -string "${SERIALNUM}"
+    ;;
 
-  sethostname)
-    shift
-    sudo scutil --set LocalHostName "$1"
-    sudo scutil --set ComputerName "$1"
-    sudo scutil --set HostName "$1"
-    serialNum=$(ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, "\""); printf("%s\n", line[4]); }')
-    sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName -string "$serialNum"
-  ;;
+    noguest)
+      sudo defaults write "/Library/Preferences/com.apple.AppleFileServer" guestAccess -bool NO
+      sudo defaults write "/Library/Preferences/SystemConfiguration/com.apple.smb.server" AllowGuestAccess -bool NO
+    ;;
+  
+    help)
+      locale_help
+    ;;
 
-  noguest)
-    sudo defaults write /Library/Preferences/com.apple.AppleFileServer guestAccess -bool NO
-    sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.smb.server AllowGuestAccess -bool N
-  ;;
-
-  *)
-    locale_help
-  ;;
-
+    *)
+      locale_help
+    ;;
   esac
 }

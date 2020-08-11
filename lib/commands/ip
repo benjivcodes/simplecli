@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Display the local and remote IP information for the client
 
 function ip_description(){
     echo "Get and/or validate IPv4 addresses."
@@ -15,41 +16,41 @@ function ip_help(){
 }
 
 function ip_handle(){
+  local EXIP
   command="$1"
 
   case $command in
-  remote)
-    exip="$(curl -s 'https://api.ipify.org?format=text')"
-    echo -e "\nExternal visible IPv4 Address: ${exip}\n"
-  ;;
+    remote)
+      EXIP="$(curl -s 'https://api.ipify.org?format=text')"
+      echo -e "\nExternal visible IPv4 Address: ${EXIP}\n"
+    ;;
 
-  local)
-    echo -e "\nLocal IPv4 addresses:"
-    ifconfig | grep -iw 'inet' | grep -Ev '127.0.0.1|::1' | awk '{print $2}'
-    echo -e "\nLocal IPv6 addresses:"
-    ifconfig | grep -iw 'inet6' | grep -Ev '127.0.0.1|::1' | awk '{print $2}'
-    echo ""
-  ;;
-
-  validate)
-    shift;
-    ip="$1"
-
-    if [[ ! ${ip} =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    local)
+      echo -e "\nLocal IPv4 addresses:"
+      ifconfig | grep -iw 'inet' | grep -Ev '127.0.0.1|::1' | awk '{print $2}'
+      echo -e "\nLocal IPv6 addresses:"
+      ifconfig | grep -iw 'inet6' | grep -Ev '127.0.0.1|::1' | awk '{print $2}'
       echo ""
-      echo -e "\n${ip}: does not appear to be a valid dotted quad.\n"
-    else
-      echo -e "\n${ip}: appears to be a valid dotted quad.\n"
-    fi
-  ;;
+    ;;
 
-  help)
-    ip_help
-  ;;
+    validate)
+      shift;
+      ip="$1"
 
-  *)
-    ip_help
-  ;;
+      if [[ ! ${ip} =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo ""
+        echo -e "\n${ip}: does not appear to be a valid dotted quad.\n"
+      else
+        echo -e "\n${ip}: appears to be a valid dotted quad.\n"
+      fi
+    ;;
 
+    help)
+      ip_help
+    ;;
+
+    *)
+      ip_help
+    ;;
   esac
 }

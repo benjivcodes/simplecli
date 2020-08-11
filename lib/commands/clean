@@ -8,9 +8,8 @@ function clean_description(){
 function clean_help(){
   echo -e "\n usage: $(basename "$0") clean <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS:\n"
-  echo " all         full clean"
-  echo " tm          remove TimeMachine local snapshots"
-  echo " ql          remove QuickLook cache"
+  echo " all         full macOS clean; here be dragons"
+  echo " core        perform core macOS cleanup/maintenance"
   echo " dns         remove DNS cache, if possible"
   echo " mem         purge unused pages and return them to free pool"
   echo " xauth       reset the Xauth control file"
@@ -18,89 +17,117 @@ function clean_help(){
   echo ""
 }
 
-function clean_timemachine(){
-  #TimeMachine local snapshots
+function clean_macos(){
+  echo "!! Warning: this may remove log data or other application/debug data."
+  read -r -s -n 1 -p "!! If you think you may need this press Ctrl-C to exit or any key to continue..."
+
+  # Free up unused but inactive memory
+  sudo purge
+
+  # Rebuild XPC cache
+  sudo /usr/libexec/xpchelper --rebuild-cache > /dev/null 2>&1
+
+  # Rebuild CoreDuet
+  sudo rm -fr "/var/db/coreduet/*" > /dev/null 2>&1
+
+  # Rebuild launch services
+  sudo /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister \
+    -kill -r -seed -domain local -domain system -domain user > /dev/null 2>&1
+  
+  # Flush DNS cache and restart mDNS
+  sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder > /dev/null 2>&1
+
+  # Clear BootCache
+  sudo rm -f "/private/var/db/BootCache.playlist" > /dev/null 2>&1
+
+  # Update dyld cache
+  sudo update_dyld_shared_cache -root / -force > /dev/null 2>&1
+
+  # Remove System caches
+  sudo rm -rf "/Library/Caches/*" > /dev/null 2>&1
+
+  # Remove Application caches (User)
+  rm -rf "${HOME}/Library/Containers/*/Data/Library/Caches/*" > /dev/null 2>&1
+
+  # Rebuild Kernel Extension cache
+  sudo touch /System/Library/Extensions && sudo kextcache -u / > /dev/null 2>&1
+
+  # Remove Quicklook cache (User)
+  qlmanage -r > /dev/null 2>&1
+  qlmanage -r cache > /dev/null 2>&1
+  rm -f "${HOME}/Library/Preferences/com.apple.quicklookconfig.plist" "${HOME}/Library/Preferences/com.apple.QuickLookDaemon.plist"
+  sudo killall cfprefsd >  /dev/null 2>&1
+
+  # Run daily, weekly and monthly maintenance scripts
+  sudo periodic daily weekly monthly > /dev/null 2>&1
+  
+  # Remove TimeMachine local snapshots
   for s in $(tmutil listlocalsnapshots / | awk -F\. '{print $4}')
     do
       sudo tmutil deletelocalsnapshots $s
   done
-}
 
-function clean_syscache(){
-  #system caches
-  sudo rm -rf "/Library/Caches/*" > /dev/null 2>&1
-
-  #application caches
-  rm -rf "${HOME}/Library/Containers/*/Data/Library/Caches/*" > /dev/null 2>&1
-}
-
-function clean_quicklook(){
-  #quicklook purge
-  qlmanage -r > /dev/null 2>&1
-  qlmanage -r cache > /dev/null 2>&1
-  rm -f "${HOME}/Library/Preferences/com.apple.quicklookconfig.plist" "${HOME}/Library/Preferences/com.apple.QuickLookDaemon.plist"
-  sudo killall cfprefsd >/dev/null 2>&1
-}
-
-function clean_logs(){
-  #user logs
+  # Remove User logs
   sudo rm -rf "${HOME}/Library/logs/*" > /dev/null 2>&1
 
-  #system logs
+  # Remove System logs
   sudo rm -rf "/Library/logs/*" "/var/log/*" "/private/var/folders/*" > /dev/null 2>&1
 }
 
+function clean_dns(){
+  # Flush DNS cache and restart mDNS
+  sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder > /dev/null 2>&1
+}
 function clean_xauth(){
+  # Reset Xauth permissions
   command -v xauth || exit 1
-  local host key
-  host="$(hostname)"
-  key="$(perl -e 'srand; printf int(rand(100000000000000000))')"
-  key="$key$key"
-  /usr/X11/bin/xauth list | awk '{print $1}' | xargs /usr/X11/bin/xauth remove
-  /usr/X11/bin/xauth add "${host}"/unix:0 . "$key"
+  local HOST KEY
+  HOST="$(hostname)"
+  KEY="$(perl -e 'srand; printf int(rand(100000000000000000))')"
+  KEY="${KEY}${KEY}"
+  xauth list | awk '{print $1}' | xargs xauth remove
+  xauth add "${HOST}"/unix:0 . "${KEY}"
+}
+
+function clean_mem(){
+  echo "!! Warnging: this may remove memory marked inactive that is actually in use by some application."
+  read -r -s -n 1 -p "!! This may cause some applications to fail. Press Ctrl-C to exit or any key to continue..."
+
 }
 
 function clean_handle(){
   command="$1"
 
   case $command in
-  all)
-    sudo killall -HUP mDNSResponder
-    clean_timemachine
-    clean_syscache
-    clean_quicklook
-    clean_logs
-    clean_xauth
-    echo ""
-  ;;
+    all)
+      clean_macos
+      clean_logs
+      clean_xauth
+      echo ""
+    ;;
 
-  tm)
-    clean_timemachine
-  ;;
+    core)
+      clean_macos
+    ;;
 
-  ql)
-    clean_quicklook
-  ;;
+    dns)
+      clean_dns
+    ;;
 
-  dns)
-    sudo killall -HUP mDNSResponder
-  ;;
+    mem)
+      clean_mem
+    ;;
 
-  mem)
-    sudo purge
-  ;;
+    xauth)
+      clean_xauth
+    ;;
 
-  xauth)
-    clean_xauth
-  ;;
+    help)
+      clean_help
+    ;;
 
-  help)
-    clean_help
-  ;;
-
-  *)
-    clean_help
-  ;;
-
-   esac
+    *)
+      clean_help
+    ;;
+  esac
 }

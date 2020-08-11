@@ -19,14 +19,10 @@ function ssllabs_handle(){
     -t)
     shift;
     if [[ -z "${GOROOT}" || -z "${GOPATH}" ]]; then
-      echo ""
-      echo " No GO environment detected, exiting..."
-      echo ""
+      echo-e "\nNo GO environment detected, exiting..."
     fi
     
-    echo ""
-    echo "This may take a while if results are older than 12 hours..."
-    echo ""
+    echo -e "\nThis may take a while if results are older than 12 hours..."
     ssllabs-scan-v3 -usecache -maxage 12 -grade "$1"
     ;;
 

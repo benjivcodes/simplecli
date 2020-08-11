@@ -8,72 +8,73 @@ function android_description(){
 function android_help(){
   echo -e "\n usage: $(basename "$0") android <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS:\n"
-  echo " unlock      Unlock the Boot Loader"
-  echo " auto        Perform automated firmware install"
-  echo " manual      Perform manual firmware install"
-  echo " lock        Lock the Boot Loader"
-  echo " fetch       Get the latest Factory and OTA images"
-  echo " ota         Peform an OTA firmware image install"
+  echo " unlock      unlock the Boot Loader"
+  echo " auto        perform automated firmware install"
+  echo " manual      perform manual firmware install"
+  echo " lock        lock the Boot Loader"
+  echo " fetch       get the latest Factory and OTA images"
+  echo " ota         peform an OTA firmware image install"
   echo " help        this message"
 	echo ""
 }
 
 function android_handle(){
+  local OTAFILE
   command="$1"
 
   case $command in
-  unlock)
-    echo -e "\nRebooting into bootloader..."
-    adb reboot bootloader
-    sleep 10
-    echo -e "\nUnlocking bootloader..."
-    fastboot flashing unlock
-    sleep 10
-    fastboot flashing unlock_critical
-    sleep 10
-  ;;
+    unlock)
+      echo -e "\nRebooting into bootloader..."
+      adb reboot bootloader
+      sleep 10
+      echo -e "\nUnlocking bootloader..."
+      fastboot flashing unlock
+      sleep 10
+      fastboot flashing unlock_critical
+      sleep 10
+    ;;
 
-  auto)
-    echo -e "\nAttempting automated install.."
-    adb reboot bootloader
-    sleep 5
-    ./flash-all.sh
-    echo -e "\nLocking bootloader..."
-    fastboot flashing lock
-  ;;
+    auto)
+      echo -e "\nAttempting automated install.."
+      adb reboot bootloader
+      sleep 5
+      ./flash-all.sh
+      echo -e "\nLocking bootloader..."
+      fastboot flashing lock
+    ;;
 
-  lock)
-    echo -e "\nRebooting into bootloader..."
-    adb reboot bootloader
-    sleep 5
-    echo -e "\nLocking bootloader..."
-    fastboot flashing lock
-  ;;
+    lock)
+      echo -e "\nRebooting into bootloader..."
+      adb reboot bootloader
+      sleep 5
+      echo -e "\nLocking bootloader..."
+      fastboot flashing lock
+    ;;
 
-  fetch)
-    echo -e "\nYou can get the latest Factory Images from https://developers.google.com/android/images"
-    echo -e "You can get Full OTA Images from https://developers.google.com/android/ota\n"
-  ;;
+    fetch)
+      echo -e "\nYou can get the latest Factory Images from https://developers.google.com/android/images"
+      echo -e "You can get Full OTA Images from https://developers.google.com/android/ota\n"
+    ;;
 
-  ota)
-    shift;
-    otafile="$1"
-    echo -e "\nRebooting into recovery..."
-    adb reboot recovery
-    sleep 20
-    echo -e "\nVerify your device is sideload ready (should appear with ${bold}sideload${normal}..."
-    adb devices
-    sleep 10
-    echo -e "\nBegining sideload of ${otafile}"
-    adb sideload "${otafile}"
-  ;;
+    ota)
+      shift;
+      OTAFILE="$1"
+      echo -e "\nRebooting into recovery..."
+      adb reboot recovery
+      sleep 20
+      echo -e "\nVerify your device is sideload ready (should appear with ${bold}sideload${normal}..."
+      adb devices
+      sleep 10
+      echo -e "\nBegining sideload of ${OTAFILE}"
+      adb sideload "${OTAFILE}"
+    ;;
 
-  help)
-		android_help
-	;;
+    help)
+      android_help
+    ;;
 
-  *)
-    android_help
-  ;;
+    *)
+      android_help
+    ;;
   esac
 }

@@ -8,67 +8,70 @@ function git_description(){
 function git_help(){
   echo -e "\n usage: $(basename "$0") git <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS:\n"
-  echo " info             display some basic info about the git repo"
-  echo " push-branch      push the current branch checkout"
-  echo " new-branch       make a new branch from the current master"
-  echo " delete-merged    attempt to delete local copies of merged branches"
-  echo " pbr              attempt to delete local copies of gone branches"
+  echo " info             display some basic info about the git repo; requires directory path, supoorts '.' as current directory"
+  echo " pb               push the current branch checkout"
+  echo " nb               make a new branch from the current master"
+  echo " dm               attempt to delete local copies of merged branches"
+  echo " prb              attempt to delete local copies of gone branches"
   echo " help             this message"
   echo ""
 }
 
 function git_handle(){
+  local MERGED_BRANCHES="/tmp/cli-git-mb.txt"
+  local OUTPUT=$(mktemp)
   command="$1"
 
   case $command in
-  info)
-    pushd . >/dev/null || exit 1
-    clear
-    while [ ! -d .git ] && [ ! "$(pwd)" = "/" ]; do cd ..; done
-    if [ -d .git ]; then
-      echo -e "\n== Remote URL:\n$(git remote -v)\n"
-      echo -e "== Remote Branches:\n$( git branch -r)\n"
-      echo -e "== Local Branches:\n$( git branch)\n"
-      echo -e "== Configuration (.git/config):\n$( cat .git/config)\n"
-      echo -e "== Most Recent Commit:\n$( git --no-pager log --max-count=1)\n"
-      echo ""
-    else
-      echo "Not a git repository."
-    fi
-    popd >/dev/null || exit 1
-  ;;
+    info)
+      shift;
+      cd "$1" || exit 1
+      clear
+      if [ -d .git ]; then
+        {
+          echo "==== This output is displayed with LESS ==="
+          echo -e "== Remote URL:\n$(git remote -v)\n"
+          echo -e "== Remote Branches:\n$( git branch -r)\n"
+          echo -e "== Local Branches:\n$( git branch)\n"
+          echo -e "== Configuration (.git/config):\n$( cat .git/config)\n"
+          echo -e "== Most Recent Commit:\n$( git --no-pager log --max-count=1)\n"
+          echo "" 
+        } >> "${OUTPUT}"
+        less "${OUTPUT}"
+      else
+        echo "Not a git repository."
+      fi
+    ;;
 
-  new-branch)
-    echo -e "\nBranches should follow the following naming convention: GHISSUENUMBER-initials-short_summary\n"
-    git checkout master
-    git pull
-    shift;
-    branch="$1"
-    git checkout -b "${branch}"
-  ;;
+    nb)
+      git checkout master
+      git pull
+      shift;
+      git checkout -b "$1"
+    ;;
 
-  push-branch)
-    git push --set-upstream origin "$(git rev-parse --abbrev-ref HEAD)"
-  ;;
+    pb)
+      git push --set-upstream origin "$(git rev-parse --abbrev-ref HEAD)"
+    ;;
 
-  delete-merged)
-    git checkout master
-    git pull
-    git branch --merged | grep -vi master > "/tmp/merged-branches"
-    xargs git branch -d < "/tmp/merged-branches"
-  ;;
+    dm)
+      git checkout master
+      git pull
+      git branch --merged | grep -vi master > "${MERGED_BRANCHES}"
+      xargs git branch -d < "${MERGED_BRANCHES}"
+      rm -f "${MERGED_BRANCHES}"
+    ;;
 
-  pbr)
-    git branch -vv | grep 'origin/.*: gone]' | awk '{print $1}' | xargs git branch -D
-  ;;
+    prb)
+      git branch -vv | grep 'origin/.*: gone]' | awk '{print $1}' | xargs git branch -D
+    ;;
 
-  help)
-    git_help
-  ;;
+    help)
+      git_help
+    ;;
 
-  *)
-    git_help
-  ;;
-
+    *)
+      git_help
+    ;;
   esac
 }
