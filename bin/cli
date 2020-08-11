@@ -45,19 +45,14 @@ function usage(){
 }
 
 function help(){
-  echo ""
-  echo "  A simple command line based extensible toolchain for MacOS."
-  echo ""
-  usage
-  echo ""
-  echo -e "  AVAILABLE COMMANDS$\n"
+  echo -e  "\n A simple command line based extensible toolchain for MacOS."
+  echo -e "\n AVAILABLE COMMANDS$\n"
 
   source_commands
   for command in "${available_commands[@]}"; do
     echo -e "  ${command} :::: $(${command}_description)"
   done
-
-  echo ""
+   echo ""
 }
 
 command="$1"
@@ -65,6 +60,7 @@ case $command in
   help)
     help
   ;;
+  
   *)
     handle_command "$@"
   ;;
