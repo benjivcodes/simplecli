@@ -8,74 +8,70 @@ function brew_description(){
 function brew_help(){
   echo -e "\n usage: $(basename "$0") homebrew <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS:\n"
-  echo " bootstrap   Install Homebrew with a base set of options and tools"
-  echo " fix         Attempt to fix anything that has gone wrong"
-  echo " remove      Remove Homebrew from the system"
-  echo " update      Update and cleanup the Homebrew installation"
-  echo " multiuser   Attempt to make Homebrew multiuser"
+  echo " bootstrap   install Homebrew with a base set of options and tools"
+  echo " fix         attempt to fix anything that has gone wrong"
+  echo " remove      remove Homebrew from the system"
+  echo " meaint      perform Homebrew maintenance"
+  echo " multi       attempt to make Homebrew multiuser"
+  echo " help        this message"
 	echo ""
 }
-
+function brew_maint(){
+  # Check if brew is installed and perform maintainance
+  command -v brew || exit 1
+  brew update
+  brew upgrade
+  brew cask upgrade
+  brew cask outdated | cut -f 1 | xargs brew cask reinstall
+  brew doctor
+  brew missing
+  brew cleanup -s
+}
 function brew_handle(){
   command="$1"
 
   case $command in
-  bootstrap)
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install findutils
-    brew install gnu-indent
-    brew install gnu-sed
-    brew install gnutls
-    brew install gnu-tar
-    brew install gawk
-    brew install coreutils
-    brew install wget
-    brew install terminal-notifier
-    brew install popt
-    brew install boost
-    brew install bash-completion
-    brew install shellcheck
-    brew install lesspipe
-    brew install jq
-    brew install shfmt
-    brew install golang
-    brew cask install android-sdk
-    brew cask install android-platform-tools
-    brew cask install java
-  ;;
+    install)
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    ;;
 
-  fix)
-    pushd +0 . || exit 1
-    cd /usr/local || exit 1
-    git remote add origin git://github.com/mxcl/homebrew.git > /dev/null 2>&1
-    git fetch origin > /dev/null 2>&1
-    git reset --hard origin/master > /dev/null 2>&1
-    brew update > /dev/null 2>&1
-    popd || exit 1
-  ;;
+    bootstrap)
+      xargs brew install < "${CLIHOME}/brew_bootstrap_packages.txt"
+      brew cask install android-sdk
+      brew cask install android-platform-tools
+      brew cask install java
+    ;;
 
-  remove)
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
-  ;;
+    fix)
+      pushd +0 . || exit 1
+      cd /usr/local || exit 1
+      git remote add origin https://github.com/Homebrew/brew.git > /dev/null 2>&1
+      git fetch origin > /dev/null 2>&1
+      git reset --hard origin/master > /dev/null 2>&1
+      brew_maint
+      popd || exit 1
+    ;;
 
-  update)
-    brew update > /dev/null 2>&1
-    brew upgrade > /dev/null 2>&1
-    brew cleanup > /dev/null 2>&1
-  ;;
+    remove)
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall.sh)"
+    ;;
 
-  multiuser)
-    echo -e "\nYou will need to add users to the group 'admin'"
-    sudo chgrp -R admin /usr/local/*
-    sudo chmod -R g+w /usr/local/*
-    sudo chgrp -R admin /Library/Caches/Homebrew
-    sudo chmod -R g+w /Library/Caches/Homebrew
-    sudo chgrp -R admin /opt
-    sudo chmod -R g+w /opt
-  ;;
+    maint)
+      brew_maint
+    ;;
 
-	*)
-		brew_help
-	;;
+    multi)
+      echo -e "\nYou will need to add users to the group 'admin'"
+      sudo chgrp -R admin $(brew --prefix) $(brew --prefix)/Cellar
+      sudo chmod -R g+rwX $(brew --prefix) $(brew --prefix)/Cellar
+    ;;
+
+    help)
+      brew_help
+    ;;
+
+    *)
+      brew_help
+    ;;
   esac
 }

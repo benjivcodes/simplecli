@@ -3,7 +3,7 @@
 # This should be sources from the environment configuration, e.g. .bash_profile
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
-export CLIHOME="${HOME}/.cli"
+export CLIHOME="/usr/local/lib/simplecli"
 export LOGIN_TRACKER="${HOME}/.login"
 
 PATH=/usr/local/opt/openssl/bin:${PATH}
@@ -53,22 +53,22 @@ function sshagent_testsocket(){
     export SSH_AUTH_SOCK=$1
   fi
 
-  if [ X"$SSH_AUTH_SOCK" = X ] ; then
+  if [ X"${SSH_AUTH_SOCK}" = X ] ; then
     return 2
   fi
 
-  if [ -S $SSH_AUTH_SOCK ] ; then
+  if [ -S ${SSH_AUTH_SOCK} ] ; then
     ssh-add -l > /dev/null
     if [ $? = 2 ] ; then
-      echo "Socket $SSH_AUTH_SOCK is dead!  Deleting!"
-      rm -f $SSH_AUTH_SOCK
+      echo "Socket ${SSH_AUTH_SOCK} is dead!  Deleting!"
+      rm -f ${SSH_AUTH_SOCK}
       return 4
     else
-      echo "Found ssh-agent $SSH_AUTH_SOCK"
+      echo "Found ssh-agent ${SSH_AUTH_SOCK}"
       return 0
     fi
   else
-    echo "$SSH_AUTH_SOCK is not a socket!"
+    echo "${SSH_AUTH_SOCK} is not a socket!"
     return 3
   fi
 }
@@ -85,16 +85,16 @@ function sshagent_init(){
   # If there is no agent in the environment, search /tmp for
   # possible agents to reuse before starting a fresh ssh-agent
   # process.
-  if [ $AGENTFOUND = 0 ] ; then
+  if [ ${AGENTFOUND} = 0 ] ; then
     for agentsocket in $(sshagent_findsockets) ; do
-      if [ $AGENTFOUND != 0 ] ; then break ; fi
+      if [ ${AGENTFOUND} != 0 ] ; then break ; fi
       if sshagent_testsocket $agentsocket ; then AGENTFOUND=1 ; fi
     done
   fi
 
   # If at this point we still haven't located an agent, it's time to
   # start a new one
-  if [ $AGENTFOUND = 0 ] ; then
+  if [ ${AGENTFOUND} = 0 ] ; then
     eval $(ssh-agent)
   fi
 
@@ -110,78 +110,28 @@ function sshagent_init(){
 function update_slacktee(){
   pushd . >/dev/null || exit 1
   cd /tmp || exit1
-  rm -f slacktee.sh
+  rm -f "slacktee.sh"
   curl -s https://api.github.com/repos/coursehero/slacktee/releases/latest \
     | jq '.zipball_url' \
-    | xargs wget -qic  -A ".zip" -O temp.zip && unzip -q -j -o -u temp.zip ./*slacktee.sh
-  mv slacktee.sh ${CLIHOME}/3rdparty/bin/slacktee
+    | xargs wget -qic  -A ".zip" -O temp.zip && unzip -q -j -o -u "temp.zip" "*slacktee.sh"
+  mv "slacktee.sh" "/usr/local//bin/slacktee"
+  rm -f "temp.zip"
   popd >/dev/null || exit 1
-}
-
-# 1password-cli functions
-function opon(){
-  eval $(op signin my)
-  export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
-  echo -e "export OP_SESSION_my=${OP_SESSION_my}" > "${LOGIN_TRACKER}"
-  echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}" >> "${LOGIN_TRACKER}"
-}
-
-function opoff(){
-  op signout
-  unset OP_SESSION_my
-  unset OP_SESSION_LIFETIME
-  rm -f "${LOGIN_TRACKER}"
-}
-
-function op_listkeys(){
-  op list items | jq -r | grep -i ssh-key | awk -F\: '{print $2}'
-}
-
-function op_addsshkey(){
-  echo "$(op get item "$1" | jq -r '.details.notesPlain')" | ssh-add -q -
-}
-
-function op_getsshkey(){
-  echo "$(op get item "$1" | jq -r '.details.notesPlain')" | pbcopy
-}
-
-function op_getpubkey(){
-  echo "$(op get item "$1" | jq -r '.details.notesPlain')" > "/tmp/keytmp"
-  chmod 600 "/tmp/keytmp"
-  ssh-keygen -f "/tmp/keytmp" -y | pbcopy
-  rm -f "/tmp/keytmp"
-}
-
-function getpwd(){
-  op get item "$1" | jq -r '.details.fields[] |select(.designation=="password").value' | pbcopy
-}
-
-function getmfa(){
-  op get totp "$1" | pbcopy
-}
-
-function update_op(){
-  cd "/tmp" || exit 1
-  rm -f op_darwin*
-  wget $(lynx -dump -listonly https://app-updates.agilebits.com/product_history/CLI \
-    | grep ^"\ \ \ 2" \
-    | sed -r 's/^\ \ \ [0-9]+\. //')
-  sudo installer -pkg $(ls op_darwin_amd64*) -target /
 }
 
 # Inject new locations into the first position in $PATH
 function pathmunge(){
-  if ! echo "$PATH" | grep -E -q "(^|:)$1($|:)"
+  if ! echo "${PATH}" | grep -E -q "(^|:)$1($|:)"
   then
-    PATH="$1":"$PATH"
+    PATH="$1":"${PATH}"
   fi
 }
 
 # Inject new locations into the first position in $MANPATH
 function manpathmunge(){
-  if ! echo "$MANPATH" | grep -E -q "(^|:)$1($|:)"
+  if ! echo "${MANPATH}" | grep -E -q "(^|:)$1($|:)"
   then
-    MANPATH="$1":"$MANPATH"
+    MANPATH="$1":"${MANPATH}"
   fi
 }
 
@@ -231,8 +181,8 @@ function dmgcrypt(){
   fi
 
   echo -e "\n"
-  hdiutil create "$vol".dmg -ov -volname "$vol" \
-    -fs HFS+ -encryption AES-256 -stdinpass -srcfolder "$src"
+  hdiutil create "${vol}".dmg -ov -volname "${vol}" \
+    -fs HFS+ -encryption AES-256 -stdinpass -srcfolder "${src}"
 }
 
 # Create an unencryped DMG from a folder on MacOS
@@ -255,7 +205,7 @@ function dmg(){
   fi
 
   echo -e "\n"
-  hdiutil create "$vol".dmg -ov -volname "$vol" -fs HFS+ -srcfolder "$src"
+  hdiutil create "${vol}".dmg -ov -volname "${vol}" -fs HFS+ -srcfolder "${src}"
 }
 
 # Read from file so that you can iterate over each line
@@ -270,10 +220,10 @@ function yt2mp3(){
   if [ -z "$1" ]; then
     echo -e "\n!!! Youtube Link Please..."
     read -r ytlink
-    youtube-dl "$ytlink" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
+    youtube-dl "${ytlink}" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
   else
     ytlink="$1"
-    youtube-dl "$ytlink" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
+    youtube-dl "${ytlink}" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
   fi
 }
 
@@ -317,25 +267,25 @@ function unhide(){
 # DIR=$(dirname "${BASH_SOURCE[0]}")
 function whereami(){
   SOURCE="${BASH_SOURCE[0]}"
-  while [ -h "$SOURCE" ]; do
-    DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-    SOURCE="$(readlink "$SOURCE")"
-    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+  while [ -h "${SOURCE}" ]; do
+    DIR="$(cd -P "$(dirname "${SOURCE}")" && pwd)"
+    SOURCE="$(readlink "${SOURCE}")"
+    [[ ${SOURCE} != /* ]] && SOURCE="$DIR/${SOURCE}"
   done
-  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  DIR="$(cd -P "$(dirname "${SOURCE}")" && pwd)"
 }
 
 function _git_prompt(){
   local git_status="$(git status -unormal 2>&1)"
-  if ! [[ $git_status =~ Not\ a\ git\ repo ]]; then
-   if [[ $git_status =~ nothing\ to\ commit ]]; then
+  if ! [[ ${git_status} =~ Not\ a\ git\ repo ]]; then
+   if [[ ${git_status} =~ nothing\ to\ commit ]]; then
       local ansi=$IGreen
-    elif [[ $git_status =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
+    elif [[ ${git_status} =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
       local ansi=$IYellow
     else
       local ansi=$IRed
     fi
-    if [[ $git_status =~ On\ branch\ ([^[:space:]]+) ]]; then
+    if [[ ${git_status} =~ On\ branch\ ([^[:space:]]+) ]]; then
       branch=${BASH_REMATCH[1]}
       test "$branch" != master || branch='master'
     else
@@ -357,19 +307,19 @@ function cert-valid-until(){
 
 function appify(){
  darwinonly
- appname=${2:-$(basename "$1" ".sh")}
- dir="${appname}.app/Contents/MacOS"
+ APPNAME=${2:-$(basename "$1" ".sh")}
+ dir="${APPNAME}.app/Contents/MacOS"
 
- if [ -a "${appname}.app" ]; then
-   echo "$PWD/${appname}.app already exists :("
+ if [ -a "${APPNAME}.app" ]; then
+   echo "$PWD/${APPNAME}.app already exists :("
    exit 1
  fi
 
- mkdir -p "${dir}"
- cp "$1" "${dir}/${appname}"
- chmod +x "${dir}/${appname}"
+ mkdir -p "${DIR}"
+ cp "$1" "${DIR}/${APPNAME}"
+ chmod +x "${DIR}/${APPNAME}"
 
- echo "${PWD}/${appname}.app"
+ echo "${PWD}/${APPNAME}.app"
 }
 
 # Set some aliases
@@ -421,9 +371,9 @@ export SHELLCHECK_OPTS="-x -e SC2145 -e SC2155 -e SC2154 -e SC2086 -e SC2046 -e 
 # Go settings
 if [ "$(uname -s)" == "Darwin" ]; then
     export GOROOT="/usr/local/opt/go/libexec"
-    export GOPATH="${CLIHOME}/lib/go"
+    export GOPATH="${GOROOT}/bin/go"
 else
-    export GOPATH=/usr/share/go/
+    export GOPATH="/usr/share/go/"
 fi
 
 ### Begin BaSH colors ###

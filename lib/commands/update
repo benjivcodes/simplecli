@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# SimpleCLI update script
+
+function update_description(){
+  echo "Updates the SimpleCLI"
+}
+
+function update_help() {
+  echo -e "SimpleCLI Update - Updates the SimpleCLI"
+  echo -e ""
+  echo -e "${bold}AVAILABLE COMMANDS${normal}"
+  echo -e " help      this message"
+}
+
+function check_for_available_updates(){
+  cd "${cli_lib}" || exit 1
+  if [[ ! -f .git ]]; then
+    (>&2 echo -e "Local install is not part of a git repository. Skipping self-update.")
+  else
+    local_revision=$(git rev-parse @)
+    remote_revision=$(git ls-remote https://github.com/benjivcodes/simplecli.git | head -1 | sed -e "s/HEAD//" -e 's/[[:space:]]*$//')
+    if [[ "${local_revision}" != "${remote_revision}" ]]; then
+      should_update="true"
+      (>&2 echo -e "${red}The SimpleCLI is NOT up-to-date${normal}")
+    fi
+  fi
+}
+
+function update_handle(){
+  echo -e "Running self-update..."
+  temp_dir="$(mktemp -d)"
+  git clone https://github.com/benjivcodes/simplecli.git ${temp_dir}
+  if [[ $? != 0 ]]; then
+    echo -e "Unable to clone CLI repository. Skipping self-update."
+  else
+    ${temp_dir}/install
+  fi
+}

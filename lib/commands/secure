@@ -2,7 +2,17 @@
 # Encrypt/decrypt a file with openssl.
 # Create an encrypted dmg on the desktop.
 
-function passwd_check(){
+# Load the SimpleCLI 1password-cli functions
+source "/usr/local/lib/simplecli/bash/1passwd-cli"
+
+function secure_description(){
+    echo "Secure file and dmg operations using openssl/hdiutil."
+}
+
+function passwdcheck(){
+  # Requires an ENCRYPTION_PWD to be set from 1password-cli
+  ENCRYPTION_PWD=$(getpwd dmg_encryption-key)
+
   if [[ -z "${ENCRYPTION_PWD}" ]]; then
       echo -e "\nExpected ENCRYPTION_PWD environment to be set, exiting!"
   fi
@@ -21,8 +31,10 @@ function secure_help(){
   exit 1
 }
 
-while true; do
-  case "$1" in
+function secure_handle(){
+  command="$1"
+
+  case "$command" in
     -h)
       secure_help
       exit 1
@@ -43,7 +55,7 @@ while true; do
     ;;
 
     -e)
-      passwd_check
+      passwdcheck
       shift;
       if [ -z $1 ];
       then
@@ -57,7 +69,7 @@ while true; do
     ;;
 
     -d)
-      passwd_check
+      passwdcheck
       shift;
       if [ -z $1 ];
       then
@@ -70,9 +82,12 @@ while true; do
       exit 1
     ;;
 
+    help)
+      secure_help
+    ;;
+
     *)
-      echo "No valid arguments supplied."
-      exit 1
+      secure_help
     ;;
   esac
-done
+}
