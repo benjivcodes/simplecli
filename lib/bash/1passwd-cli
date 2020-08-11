@@ -7,11 +7,13 @@ function opon(){
   then
     eval $(op signin my)
     export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
-    echo -e "export OP_SESSION_my=${OP_SESSION_my}" > "${LOGIN_TRACKER}"
-    echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}" >> "${LOGIN_TRACKER}"
+    {
+      echo -e "export OP_SESSION_my=${OP_SESSION_my}"
+      echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}"
+    } > "${LOGIN_TRACKER}"
     source "${LOGIN_TRACKER}"
   else
-    echo -e "1password-cli session close to expiration but still valid"
+    echo -e "1password-cli session still valid."
   fi
 }
 
@@ -34,25 +36,25 @@ function op_addsshkey(){
 
 function op_getsshkey(){
   opon
-  echo "$(op get item "$1" | jq -r '.details.notesPlain')" | pbcopy
+  echo "$(op get item "$1" | jq -r '.details.notesPlain')" | pbcopy -Prefer txt
 }
 
 function op_getpubkey(){
   opon
   echo "$(op get item "$1" | jq -r '.details.notesPlain')" > "/tmp/keytmp"
   chmod 600 "/tmp/keytmp"
-  ssh-keygen -f "/tmp/keytmp" -y | pbcopy
+  ssh-keygen -f "/tmp/keytmp" -y | pbcopy -Prefer txt
   rm -f "/tmp/keytmp"
 }
 
 function getpwd(){
   opon
-  op get item "$1" | jq -r '.details.fields[] |select(.designation=="password").value' | pbcopy
+  op get item "$1" | jq -r '.details.fields[] |select(.designation=="password").value' | pbcopy -Prefer txt
 }
 
 function getmfa(){
   opon
-  op get totp "$1" | pbcopy
+  op get totp "$1" | pbcopy -Prefer txt
 }
 
 function update_op(){
