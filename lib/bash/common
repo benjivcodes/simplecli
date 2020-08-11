@@ -21,10 +21,10 @@ export PATH
 export LESSOPEN="|lesspipe.sh %s"
 
 # Load some completion scripts
-if [ -f "/usr/local/etc/bash_completion" ]
-then
-  source "/usr/local/etc/bash_completion"
-fi
+[ -e "/usr/local/etc/bash_completion" ] && source "/usr/local/etc/bash_completion"
+
+# If available, source integration support for iterm2
+[ -e "${HOME}/.iterm2_shell_integration.bash" ] && source "${HOME}/.iterm2_shell_integration.bash"
 
 # Let's make Homebrew a litte less chatty
 export HOMEBREW_USE_GCC=1
