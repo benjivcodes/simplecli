@@ -24,25 +24,26 @@ function opoff(){
 
 function listkeys(){
   opon
-  op list items | jq -r | grep -i ssh-key | awk -F\: '{print $2}'
-}
-
-function addsshkey(){
-  opon
-  op get item --fields notes "$1" | ssh-add -q -
+  op list items --categories "Secure Note" | op get item - --fields title | grep -i "ssh-key"
 }
 
 function getsshkey(){
   opon
-  op get item --fields notes "$1"
+  op get item --fields notesplain "$1" | base64 -d
+}
+
+function addsshkey(){
+  opon
+  getsshkey "$1" | ssh-add -q -
 }
 
 function getsshkey.pub(){
+  local OUTPUT=$(mktemp)
   opon
-  op get item --fields notes "$1" > "/tmp/keytmp"
-  chmod 600 "/tmp/keytmp"
-  ssh-keygen -f "/tmp/keytmp" -y
-  rm -f "/tmp/keytmp"
+  getsshkey "$1" > "${OUTPUT}"
+  chmod 600 "${OUTPUT}"
+  ssh-keygen -y -f "${OUTPUT}"
+  rm -f "${OUTPUT}"
 }
 
 function getpwd(){
@@ -56,7 +57,7 @@ function getuser(){
 }
 
 function gettoken(){
-  op get item "$1" | jq -r '.details.sections[] | select(.fields).fields[] | select(.t== "Personal Access Token").v'
+  op get item --fields "Personal Access Token" "$1"
 }
 
 function getmfa(){
