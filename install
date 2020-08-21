@@ -1,32 +1,22 @@
 #!/usr/bin/env bash
+# Install the SimpleCLI tool
 
-cd $(dirname "${BASH_SOURCE[0]}")
+cd $(dirname "${BASH_SOURCE[0]}") || exit 1
 DIR="$(pwd)"
-INSTALL_DIR="/usr/local"
+INSTALLDIR="/usr/local"
 
 function install() {
-  mkdir -p "${INSTALL_DIR}/bin"
-  mkdir -p "${INSTALL_DIR}/lib/simplecli"
-  rsync -azh "${DIR}/bin/" "${INSTALL_DIR}/bin/"
-  rsync -azh "${DIR}/lib/" "${INSTALL_DIR}/lib/simplecli/"
+  mkdir -p "${INSTALLDIR}/bin"
+  mkdir -p "${INSTALLDIR}/lib/simplecli"
+  rsync -azh "${DIR}/bin/" "${INSTALLDIR}/bin/"
+  rsync -azh "${DIR}/lib/" "${INSTALLDIR}/lib/simplecli/"
 
   if [[ -d "${DIR}/.git" ]]; then
-    rsync -azh "${DIR}/.git" "${INSTALL_DIR}/lib/simplecli/"
+    rsync -azh "${DIR}/.git" "${INSTALLDIR}/lib/simplecli/"
   fi
 
   echo "SimpleCLI successfully installed"
 }
 
-# process script flags/parameters
-shift
-for i in "$@"; do
-  case "${i}" in
-    --install-dir)
-      shift
-      INSTALL_DIR="${1}"
-      shift
-    ;;
-  esac
-done
-
+reset
 install
