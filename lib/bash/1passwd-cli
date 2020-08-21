@@ -12,8 +12,6 @@ function opon(){
       echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}"
     } > "${LOGIN_TRACKER}"
     source "${LOGIN_TRACKER}"
-  else
-    echo -e "1password-cli session still valid."
   fi
 }
 
@@ -36,20 +34,25 @@ function addsshkey(){
 
 function getsshkey(){
   opon
-  op get item --fields notes "$1" | pbcopy -Prefer txt
+  op get item --fields notes "$1"
 }
 
-function getpubkey(){
+function getsshkey.pub(){
   opon
-  echo "$(op get item "$1" | jq -r '.details.notesPlain')" > "/tmp/keytmp"
+  op get item --fields notes "$1" > "/tmp/keytmp"
   chmod 600 "/tmp/keytmp"
-  ssh-keygen -f "/tmp/keytmp" -y | pbcopy -Prefer txt
+  ssh-keygen -f "/tmp/keytmp" -y
   rm -f "/tmp/keytmp"
 }
 
 function getpwd(){
   opon
   op get item --fields password "$1" | pbcopy -Prefer txt
+}
+
+function getuser(){
+  opon
+  op get item --fields username "$1"
 }
 
 function gettoken(){
