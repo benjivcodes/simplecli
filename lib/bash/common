@@ -14,6 +14,7 @@ PATH=/usr/local/opt/go/libexec/bin:${PATH}
 PATH=/usr/local/opt/grep/libexec/gnubin:${PATH}
 PATH=/usr/local/opt/gnu-getopt/bin:${PATH}
 PATH=/usr/local/opt/gnu-sed/libexec/gnubin:${PATH}
+PATH=/usr/local/opt/ruby/bin:${PATH}
 PATH=${PATH}:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 
@@ -44,7 +45,7 @@ function sshagent_findsockets(){
 }
 
 function sshagent_testsocket(){
-  if [ ! -x "$(which ssh-add)" ] ; then
+  if [ ! -x "$(which ssh-add)" ]; then
     echo "ssh-add is not available; agent testing aborted"
     return 1
   fi
@@ -53,11 +54,11 @@ function sshagent_testsocket(){
     export SSH_AUTH_SOCK=$1
   fi
 
-  if [ X"${SSH_AUTH_SOCK}" = X ] ; then
+  if [ X"${SSH_AUTH_SOCK}" = X ]; then
     return 2
   fi
 
-  if [ -S ${SSH_AUTH_SOCK} ] ; then
+  if [ -S ${SSH_AUTH_SOCK} ]; then
     ssh-add -l > /dev/null
     if [ $? = 2 ] ; then
       echo "Socket ${SSH_AUTH_SOCK} is dead!  Deleting!"
@@ -85,7 +86,7 @@ function sshagent_init(){
   # If there is no agent in the environment, search /tmp for
   # possible agents to reuse before starting a fresh ssh-agent
   # process.
-  if [ ${AGENTFOUND} = 0 ] ; then
+  if [ ${AGENTFOUND} = 0 ]; then
     for agentsocket in $(sshagent_findsockets) ; do
       if [ ${AGENTFOUND} != 0 ] ; then break ; fi
       if sshagent_testsocket $agentsocket ; then AGENTFOUND=1 ; fi
@@ -94,7 +95,7 @@ function sshagent_init(){
 
   # If at this point we still haven't located an agent, it's time to
   # start a new one
-  if [ ${AGENTFOUND} = 0 ] ; then
+  if [ ${AGENTFOUND} = 0 ]; then
     eval $(ssh-agent)
   fi
 
