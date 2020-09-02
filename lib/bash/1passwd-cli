@@ -20,6 +20,7 @@ function opoff(){
   unset OP_SESSION_my
   unset OP_SESSION_LIFETIME
   rm -f "${LOGIN_TRACKER}"
+  touch "${LOGIN_TRACKER}"
 }
 
 function listkeys(){
