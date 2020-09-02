@@ -16,3 +16,4 @@ lesspipe
 jq
 shfmt
 golang
+ruby
