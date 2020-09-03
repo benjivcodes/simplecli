@@ -63,3 +63,6 @@ target/
 virt/
 .vscode/
 venv/
+
+# Ignore fontconfig .uuid files
+.uuid
