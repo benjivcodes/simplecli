@@ -20,3 +20,6 @@ function install() {
 
 reset
 install
+
+echo -e "\nIf you have not already installed Powerline patched fonts, now might be a good time..."
+echo -e "via: cd ./fonts && ./install\n"
