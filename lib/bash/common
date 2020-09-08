@@ -376,7 +376,10 @@ fi
 umask 022
 
 # Enable SuDo tab completion
-complete -cf sudo
+if [ "${SHELL}" = "/bin/bash" ]
+then
+  complete -cf sudo
+fi
 
 # Set shellcheck options
 export SHELLCHECK_OPTS="-x -e SC2145 -e SC2155 -e SC2154 -e SC2086 -e SC2046 -e SC2003 -e SC1090 -e SC1117 -e SC1090 -e SC1091 -e SC2059 -e SC2034 -e SC2002 -e SC2005 -e SC1001 -e SC2004 -e SC1091"
