@@ -4,7 +4,7 @@
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export CLIHOME="/usr/local/lib/simplecli"
-export LOGIN_TRACKER="/var/folders/tr/py5mdrlx1y360npn19grpxmh0000gn/T/tmp.4SEL9xpi"
+export LOGIN_TRACKER=".login"
 
 PATH=/usr/local/opt/openssl/bin:${PATH}
 PATH=/usr/local/opt/curl/bin:${PATH}
@@ -43,6 +43,11 @@ function darwinonly(){
     echo -e "\n This is macOS specific function, sorry.\n"
     exit 1
   fi
+}
+
+# Simple file sort
+function sf(){
+  sort -u -o $1 $1
 }
 
 # Smarter ssh-agent handling
