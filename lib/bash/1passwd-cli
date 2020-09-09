@@ -75,3 +75,14 @@ function update_op(){
     | sed -r 's/^\ \ \ [0-9]+\. //')
   sudo installer -pkg $(ls op_darwin_amd64*) -target /
 }
+
+function loadkeys(){
+   if [ $(( ${OP_SESSION_LIFETIME} - $( date +%s ) )) -lt 30 ];
+  then
+    opon && addsshkey $(hostname -s)-ssh-key
+    reset
+  else
+    addsshkey $(hostname -s)-ssh-key
+    reset
+  fi
+}
