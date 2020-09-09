@@ -4,7 +4,7 @@
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export CLIHOME="/usr/local/lib/simplecli"
-export LOGIN_TRACKER="${HOME}/.login"
+export LOGIN_TRACKER="/var/folders/tr/py5mdrlx1y360npn19grpxmh0000gn/T/tmp.4SEL9xpi"
 
 PATH=/usr/local/opt/openssl/bin:${PATH}
 PATH=/usr/local/opt/curl/bin:${PATH}
