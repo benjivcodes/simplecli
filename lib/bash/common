@@ -4,7 +4,7 @@
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export CLIHOME="/usr/local/lib/simplecli"
-export LOGIN_TRACKER=".login"
+export LOGIN_TRACKER="${HOME}/.login"
 
 PATH=/usr/local/opt/openssl/bin:${PATH}
 PATH=/usr/local/opt/curl/bin:${PATH}
@@ -72,11 +72,9 @@ function sshagent_testsocket(){
   if [ -S ${SSH_AUTH_SOCK} ]; then
     ssh-add -l > /dev/null
     if [ $? = 2 ] ; then
-      echo "Socket ${SSH_AUTH_SOCK} is dead!  Deleting!"
       rm -f ${SSH_AUTH_SOCK}
       return 4
     else
-      echo "Found ssh-agent ${SSH_AUTH_SOCK}"
       return 0
     fi
   else
@@ -88,7 +86,6 @@ function sshagent_testsocket(){
 function sshagent_init(){
   # ssh agent sockets can be attached to a ssh daemon process or an
   # ssh-agent process.
-
   AGENTFOUND=0
 
   # Attempt to find and use the ssh-agent in the current environment
@@ -98,9 +95,9 @@ function sshagent_init(){
   # possible agents to reuse before starting a fresh ssh-agent
   # process.
   if [ ${AGENTFOUND} = 0 ]; then
-    for agentsocket in $(sshagent_findsockets) ; do
+    for AGENTSOCKET in $(sshagent_findsockets) ; do
       if [ ${AGENTFOUND} != 0 ] ; then break ; fi
-      if sshagent_testsocket $agentsocket ; then AGENTFOUND=1 ; fi
+      if sshagent_testsocket $AGENTSOCKET ; then AGENTFOUND=1 ; fi
     done
   fi
 
@@ -112,10 +109,7 @@ function sshagent_init(){
 
   # Clean up
   unset AGENTFOUND
-  unset agentsocket
-
-  # Finally, show what keys are currently in the agent
-  ssh-add -l
+  unset AGENTSOCKET
 }
 
 # Update slacktee
@@ -345,6 +339,10 @@ alias vi='/usr/bin/vim -X'
 alias vim='/usr/bin/vim -X'
 alias grep='grep --color'
 
+# Set Homebrew Python3 as the deefault python
+alias pip='/usr/local/bin/pip3'
+alias python='/usr/local/bin/python3'
+
 # Turn the Vagrant gui off
 export VAGRANT_GUI="false"
 
@@ -396,6 +394,9 @@ if [ "$(uname -s)" = "Darwin" ]; then
 else
     export GOPATH="/usr/share/go/"
 fi
+
+# If available, source the 1password-cli login tracker
+[ -e "${LOGIN_TRACKER}" ] && source "${LOGIN_TRACKER}"
 
 ### Begin BaSH colors ###
 if [ "${SHELL}" = "/bin/bash" ]
