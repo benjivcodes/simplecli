@@ -79,10 +79,9 @@ function update_op(){
 function loadkeys(){
    if [ $(( ${OP_SESSION_LIFETIME} - $( date +%s ) )) -lt 30 ];
   then
-    opon && addsshkey $(hostname -s)-ssh-key
-    reset
+    opon && sleep 1
+    for k in $(listkeys); do addsshkey ${k}; done
   else
-    addsshkey $(hostname -s)-ssh-key
-    reset
+    for k in $(listkeys); do addsshkey ${k}; done
   fi
 }
