@@ -31,11 +31,8 @@ function brew_handle(){
   command="$1"
 
   case $command in
-    install)
-      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-    ;;
-
     bootstrap)
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
       xargs brew install < "${CLIHOME}/brew_bootstrap_packages.txt"
       brew cask install android-sdk
       brew cask install android-platform-tools
