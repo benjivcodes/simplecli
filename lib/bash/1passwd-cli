@@ -25,23 +25,23 @@ function opoff(){
 
 function listkeys(){
   opon
-  op list items --categories "Secure Note" | op get item - --fields title | grep -i "ssh-key"
+  op list items --categories "Secure Note" "$1" --vault "$2" | op get item - --fields title | grep -i "ssh-key"
 }
 
 function getsshkey(){
   opon
-  op get item --fields notesplain "$1" | base64 -d
+  op get item --fields notesplain "$1" --vault "$2" | base64 -d
 }
 
 function addsshkey(){
   opon
-  getsshkey "$1" | ssh-add -q -
+  getsshkey "$1" "$2" | ssh-add -q -
 }
 
 function getsshkey.pub(){
   local OUTPUT=$(mktemp)
   opon
-  getsshkey "$1" > "${OUTPUT}"
+  getsshkey "$1" "$2" > "${OUTPUT}"
   chmod 600 "${OUTPUT}"
   ssh-keygen -y -f "${OUTPUT}"
   rm -f "${OUTPUT}"
@@ -49,21 +49,22 @@ function getsshkey.pub(){
 
 function getpwd(){
   opon
-  op get item --fields password "$1" | pbcopy -Prefer txt
+  op get item --fields password "$1"  --vault "$2" | pbcopy -Prefer txt
 }
 
 function getuser(){
   opon
-  op get item --fields username "$1"
+  op get item --fields username "$1" --vault "$2"
 }
 
 function gettoken(){
-  op get item --fields "Personal Access Token" "$1"
+  opon
+  op get item --fields "Personal Access Token" "$1" --vault "$2"
 }
 
 function getmfa(){
   opon
-  op get totp "$1" | pbcopy -Prefer txt
+  op get totp "$1" --vault "$2" | pbcopy -Prefer txt
 }
 
 function update_op(){
@@ -74,14 +75,4 @@ function update_op(){
     | grep ^"\ \ \ 2" \
     | sed -r 's/^\ \ \ [0-9]+\. //')
   sudo installer -pkg $(ls op_darwin_amd64*) -target /
-}
-
-function loadkeys(){
-   if [ $(( ${OP_SESSION_LIFETIME} - $( date +%s ) )) -lt 30 ];
-  then
-    opon && sleep 1
-    for k in $(listkeys); do addsshkey ${k}; done
-  else
-    for k in $(listkeys); do addsshkey ${k}; done
-  fi
 }
