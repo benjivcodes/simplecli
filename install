@@ -18,7 +18,6 @@ function install() {
   echo "SimpleCLI successfully installed"
 }
 
-reset
 install
 
 echo -e "\nIf you have not already installed Powerline patched fonts, now might be a good time..."
