@@ -35,7 +35,7 @@ layout: post
 title: $POST_TITLE
 subtitle: $POST_SUBTITLE
 date: $POST_DATE
-gh-repo: benjivcodes/benjivcodes.github.io
+gh-repo: $JEKYLL_GH_PROMO
 gh-badge: [star, fork, follow]
 tags: [post]
 comments: true
@@ -64,7 +64,7 @@ permalink: "/$PAGE_PERMALINK/"
 title: $PAGE_TITLE
 subtitle: $PAGE_SUBTITLE
 date: $PAGE_DATE
-gh-repo: benjivcodes/benjivcodes.github.io
+gh-repo: $JEKYLL_GH_PROMO
 gh-badge: [star, fork, follow]
 tags: [page]
 comments: true
@@ -82,8 +82,8 @@ function jekyll_handle(){
     brew install pidof
   fi
 
-  if [ -z ${BLOG_HOME} ]; then
-    echo "No BLOG_HOME set, exiting..."
+  if [ -z ${BLOG_HOME} ] || [ -z ${JEKYLL_GH_PROMO} ]; then
+    echo "No BLOG_HOME or JEKYLL_GH_PROMO set, exiting..."
     exit 1
   fi
 
