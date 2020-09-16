@@ -39,10 +39,18 @@ fi
 export HOMEBREW_USE_GCC=1
 export HOMEBREW_VERBOSE=1
 
-# Are we on macOS
+# Only on MacOS
 function darwinonly(){
   if [ ! "$(uname -s)" == "Darwin" ]; then
     echo -e "\n This is macOS specific function, sorry.\n"
+    exit 1
+  fi
+}
+
+# Only on Linux
+function linuxonly(){
+  if [ ! "$(uname -s)" == "Linux" ]; then
+    echo -e "\n This is Linux specific function, sorry.\n"
     exit 1
   fi
 }
