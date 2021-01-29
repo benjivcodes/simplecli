@@ -6,8 +6,12 @@ DIR="$(pwd)"
 INSTALLDIR="/usr/local"
 
 function install() {
+  rm -f appify  cli  con  headerchk  mbox2imap  slacktee  ssllabs-scan-v3
   mkdir -p "${INSTALLDIR}/bin"
+
+  rm -fr "${INSTALLDIR}/lib/simplecli"
   mkdir -p "${INSTALLDIR}/lib/simplecli"
+
   rsync -azh "${DIR}/bin/" "${INSTALLDIR}/bin/"
   rsync -azh "${DIR}/lib/" "${INSTALLDIR}/lib/simplecli/"
 
@@ -19,6 +23,3 @@ function install() {
 }
 
 install
-
-echo -e "\nIf you have not already installed Powerline patched fonts, now might be a good time..."
-echo -e "via: cd ./fonts && ./install\n"
