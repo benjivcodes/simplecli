@@ -23,6 +23,11 @@ function gh_handle(){
   local OUTPUT=$(mktemp)
   local GHUSER=$(getuser github)
   local GHTOKEN=$(gettoken github)
+
+  if [[ -z "$GH_URL" ]]
+  then
+    local GH_URL="https://api.github.com"
+  fi
   command="$1"
 
   case $command in
@@ -33,14 +38,14 @@ function gh_handle(){
       -X POST \
       -H "Accept: application/vnd.github.v3+json" \
       -d '{"title":"'$1'","key":"'"$(cat ${OUTPUT})"'"}' \
-      https://api.github.com/user/keys
+      ${GH_URL}/user/keys
     ;;
 
     list-keys)
       curl -s -u $(getuser github):$(gettoken github) \
       -X GET \
       -H "Accept: application/vnd.github.v3+json" \
-      https://api.github.com/user/keys | jq -r '.[] | "\(.id) \(.title)"'
+      ${GH_URL}/user/keys | jq -r '.[] | "\(.id) \(.title)"'
     ;;
 
     del-key)
@@ -48,7 +53,7 @@ function gh_handle(){
       curl -u "${GHUSER}:${GHTOKEN}" \
       -X DELETE \
       -H "Accept: application/vnd.github.v3+json" \
-      https://api.github.com/user/keys/$1    
+      ${GH_URL}/user/keys/$1
     ;;
 
     help)
