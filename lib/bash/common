@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Common functions for BaSH Profile Configuration
-# This should be sources from the environment configuration, e.g. .bash_profile
+# This should be sourced from the environment configuration, e.g. .bash_profile
 
-export BASH_SILENCE_DEPRECATION_WARNING=1
-export CLIHOME="/usr/local/lib/simplecli"
-export LOGIN_TRACKER="${HOME}/.login"
+# Ensure no core files by default.
+ulimit -S -c 0
 
+# Set some $PATH stuff
 PATH=/usr/local/opt/openssl/bin:${PATH}
 PATH=/usr/local/opt/curl/bin:${PATH}
 PATH=/usr/local/opt/coreutils/libexec/gnubin:${PATH}
@@ -20,8 +20,39 @@ PATH=/home/linuxbrew/.linuxbrew/sbin:${PATH}
 PATH=${PATH}:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 
+export BASH_SILENCE_DEPRECATION_WARNING=1
+export CLIHOME="/usr/local/lib/simplecli"
+export LOGIN_TRACKER="${HOME}/.login"
+
 # Setup some input pre-processing on less.
 export LESSOPEN="|lesspipe.sh %s"
+
+# Let's make Homebrew a litte less chatty
+export HOMEBREW_USE_GCC=1
+export HOMEBREW_VERBOSE=1
+
+# Turn the Vagrant gui off
+export VAGRANT_GUI="false"
+
+# Disable Homebrew Analytics
+export HOMEBREW_NO_ANALYTICS=1
+
+# Set the default editor.
+EDITOR="/usr/bin/vim"
+export EDITOR VISUAL="${EDITOR}" SVN_EDITOR="${EDITOR}"
+
+# Set some behavior reguarding history.
+export HISTFILE="${HOME}/.bash_history"
+export HISTSIZE=100000
+export HISTCONTROL=ignoreboth
+export HISTTIMEFORMAT="%F %T "
+if [ "${SHELL}" = "/bin/bash" ]
+then
+  shopt -s histappend
+fi
+
+# Set some basic colors
+export LSCOLORS=gxfxcxdxbxegedabagacad
 
 # Load some completion scripts
 if [ "${SHELL}" = "/bin/bash" ] && [ -e "/usr/local/etc/bash_completion" ]
@@ -34,10 +65,6 @@ if [ "${SHELL}" = "/bin/bash" ] && [ -e "${HOME}/.iterm2_shell_integration.bash"
 then
   source "${HOME}/.iterm2_shell_integration.bash"
 fi
-
-# Let's make Homebrew a litte less chatty
-export HOMEBREW_USE_GCC=1
-export HOMEBREW_VERBOSE=1
 
 # Only on MacOS
 function darwinonly(){
@@ -323,44 +350,18 @@ function cert-valid-until(){
 
 # Set some aliases
 alias ...='reset'
-alias cp='cp'
-alias e='vimr'
-alias ls='ls -FG --color=auto'
+alias cp='cp -i'
 alias rm='rm -i'
+alias ls='ls -FG --color=auto'
 alias sudo='sudo -H'
+alias e='vimr'
 alias vi='/usr/bin/vim -X'
 alias vim='/usr/bin/vim -X'
-alias grep='grep --color'
+alias grep='grep -i --color'
 
 # Set Homebrew Python3 as the deefault python
 alias pip='pip3'
 alias python='python3'
-
-# Turn the Vagrant gui off
-export VAGRANT_GUI="false"
-
-# Disable Homebrew Analytics
-export HOMEBREW_NO_ANALYTICS=1
-
-# Set the default editor.
-EDITOR="/usr/bin/vim"
-export EDITOR VISUAL="${EDITOR}" SVN_EDITOR="${EDITOR}"
-
-# Set some behavior reguarding history.
-export HISTFILE="${HOME}/.bash_history"
-export HISTSIZE=100000
-export HISTCONTROL=ignoreboth
-export HISTTIMEFORMAT="%F %T "
-if [ "${SHELL}" = "/bin/bash" ]
-then
-  shopt -s histappend
-fi
-
-# Ensure no core files by default.
-ulimit -S -c 0
-
-# Set some basic colors
-export LSCOLORS=gxfxcxdxbxegedabagacad
 
 # Try to get lines to wrap correctly.
 if [ "${SHELL}" = "/bin/bash" ]
