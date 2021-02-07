@@ -82,16 +82,10 @@ function jekyll_handle(){
     brew install pidof
   fi
 
-  if [ -z ${BLOG_HOME} ] || [ -z ${JEKYLL_GH_PROMO} ]; then
-    echo "No BLOG_HOME or JEKYLL_GH_PROMO set, exiting..."
-    exit 1
-  fi
-
   command="$1"
 
   case $command in
     serve)
-      cd "${BLOG_HOME}" || exit 1
       bundle exec jekyll serve --livereload > "/tmp/jekyll_serve.log" 2>&1 &
       echo "Sleeping 5s to complete startup..." && sleep 5
       cat "/tmp/jekyll_serve.log"
@@ -103,14 +97,12 @@ function jekyll_handle(){
     ;;
 
     post)
-      cd "${BLOG_HOME}" || exit 1
       git checkout master
       git pull
       jekyll_post
     ;;
 
     page)
-      cd "${BLOG_HOME}" || exit 1
       git checkout master
       git pull
       jekyll_page
@@ -123,7 +115,6 @@ function jekyll_handle(){
     ;;
 
     publish)
-      cd "${BLOG_HOME}" || exit 1
       git a . > /dev/null 2>&1 && sleep 1
       git c "push blog updates via SimpleCLI" > /dev/null 2>&1 && sleep 1
       git ps
