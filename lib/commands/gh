@@ -18,7 +18,6 @@ function gh_help(){
 function gh_handle(){
   # This function expects go find your Github credentials stored in 1password under an item
   # titled Github; if it can't be found it fail.
-
   local MERGED_BRANCHES="/tmp/cli-git-mb.txt"
   local OUTPUT=$(mktemp)
   local GHUSER=$(getuser github)

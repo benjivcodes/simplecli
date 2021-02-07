@@ -33,7 +33,8 @@ function update_handle(){
   echo -e "Running self-update..."
   temp_dir="$(mktemp -d)"
   git clone https://github.com/benjivcodes/simplecli.git ${temp_dir}
-  if [[ $? != 0 ]]; then
+  if [[ $? != 0 ]]
+  then
     echo -e "Unable to clone CLI repository. Skipping self-update."
   else
     ${temp_dir}/install

@@ -16,6 +16,7 @@ function brew_help(){
   echo " help        this message"
 	echo ""
 }
+
 function brew_maint(){
   # Check if brew is installed and perform maintainance
   command -v brew || exit 1
@@ -27,6 +28,7 @@ function brew_maint(){
   brew missing
   brew cleanup -s
 }
+
 function brew_handle(){
   command="$1"
 

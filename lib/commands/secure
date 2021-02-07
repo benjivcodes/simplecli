@@ -13,7 +13,8 @@ function passwdcheck(){
   # Requires an ENCRYPTION_PWD to be set from 1password-cli
   ENCRYPTION_PWD=$(getpwd dmg_encryption-key)
 
-  if [[ -z "${ENCRYPTION_PWD}" ]]; then
+  if [[ -z "${ENCRYPTION_PWD}" ]]
+  then
       echo -e "\nExpected ENCRYPTION_PWD environment to be set, exiting!"
   fi
 }
@@ -42,7 +43,7 @@ function secure_handle(){
 
     -i)
       shift;
-      if [ -z $1 ];
+      if [ -z $1 ]
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1
@@ -57,7 +58,7 @@ function secure_handle(){
     -e)
       passwdcheck
       shift;
-      if [ -z $1 ];
+      if [ -z $1 ]
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1
@@ -71,7 +72,7 @@ function secure_handle(){
     -d)
       passwdcheck
       shift;
-      if [ -z $1 ];
+      if [ -z $1 ]
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1

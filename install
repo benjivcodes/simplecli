@@ -15,7 +15,8 @@ function install() {
   rsync -azh "${DIR}/bin/" "${INSTALLDIR}/bin/"
   rsync -azh "${DIR}/lib/" "${INSTALLDIR}/lib/simplecli/"
 
-  if [[ -d "${DIR}/.git" ]]; then
+  if [[ -d "${DIR}/.git" ]]
+  then
     rsync -azh "${DIR}/.git" "${INSTALLDIR}/lib/simplecli/"
   fi
 

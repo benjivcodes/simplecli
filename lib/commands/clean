@@ -78,6 +78,7 @@ function clean_dns(){
   # Flush DNS cache and restart mDNS
   sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder > /dev/null 2>&1
 }
+
 function clean_xauth(){
   # Reset Xauth permissions
   command -v xauth || exit 1
@@ -92,7 +93,6 @@ function clean_xauth(){
 function clean_mem(){
   echo "!! Warnging: this may remove memory marked inactive that is actually in use by some application."
   read -r -s -n 1 -p "!! This may cause some applications to fail. Press Ctrl-C to exit or any key to continue..."
-
 }
 
 function clean_handle(){

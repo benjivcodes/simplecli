@@ -73,12 +73,13 @@ EOF
 }
 
 function jekyll_handle(){
-
-  if [ ! -x "$(which jekyll)" ]; then
+  if [ ! -x "$(which jekyll)" ]
+  then
     sudo gem install -n /usr/local/bin jekyll
   fi
 
-  if [ ! -x "$(which pidof)" ]; then
+  if [ ! -x "$(which pidof)" ]
+  then
     brew install pidof
   fi
 

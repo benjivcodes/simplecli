@@ -18,7 +18,8 @@ function ssllabs_handle(){
   case "$command" in
     -t)
     shift;
-    if [[ -z "${GOROOT}" || -z "${GOPATH}" ]]; then
+    if [[ -z "${GOROOT}" || -z "${GOPATH}" ]]
+    then
       echo-e "\nNo GO environment detected, exiting..."
     fi
     

@@ -37,7 +37,8 @@ function ip_handle(){
       shift;
       ip="$1"
 
-      if [[ ! ${ip} =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      if [[ ! ${ip} =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
+      then
         echo ""
         echo -e "\n${ip}: does not appear to be a valid dotted quad.\n"
       else

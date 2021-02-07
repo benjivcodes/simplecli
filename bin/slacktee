@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 # https://github.com/course-hero/slacktee
 # ------------------------------------------------------------
 # Copyright 2017 Course Hero, Inc.
@@ -53,8 +52,7 @@ cond_prefix_prefixes=()
 cond_prefix_patterns=()
 found_title_prefix=""
 
-function escape_string()
-{
+function escape_string(){
 	local result=$(echo "$1" \
 		| sed 's/\\/\\\\/g' \
 		| sed 's/"/\\"/g' \
@@ -62,37 +60,32 @@ function escape_string()
 	echo "$result"
 }
 
-function write_to_stderr()
-{
-    echo "$me: $@" > /dev/null >&2
+function write_to_stderr(){
+  echo "$me: $@" > /dev/null >&2
 }
 
-function err_exit()
-{
+function err_exit(){
 	local code=$1
 	shift
 	write_to_stderr $@
 	exit $code
 }
 
-function get_ok_in_response() {
-    local response=$1
-    echo "$(echo "$response" | awk 'match($0, /"ok":([^,}]+)/) {print substr($0, RSTART+5, RLENGTH-5)}')"
+function get_ok_in_response(){
+  local response=$1
+  echo "$(echo "$response" | awk 'match($0, /"ok":([^,}]+)/) {print substr($0, RSTART+5, RLENGTH-5)}')"
 }
 
-function handle_signal()
-{
-    cleanup
-    err_exit 1 "Aborting"
+function handle_signal(){
+  cleanup
+  err_exit 1 "Aborting"
 }
 
-function cleanup()
-{
+function cleanup(){
 	[[ -f $filename ]] && rm "$filename"
 }
 
-function show_help()
-{
+function show_help(){
 	cat << EOF
 Usage: $me [options]
 
@@ -128,12 +121,12 @@ options:
 EOF
 }
 
-function send_message()
-{
+function send_message(){
 	message="$1"
 
 	# Prepend the prefix to the message, if it's set
-	if [[ -z $attachment && -n $found_pattern_prefix ]]; then
+	if [[ -z $attachment && -n $found_pattern_prefix ]]
+  then
 		message="$found_pattern_prefix$message"
 		# Clear conditional prefix for the nest send
 		found_pattern_prefix=""
@@ -141,12 +134,15 @@ function send_message()
 
 	wrapped_message=$(echo "$textWrapper\n$message\n$textWrapper")
 	message_attr=""
-	if [[ $message != "" ]]; then
-		if [[ -n $attachment ]]; then
+	if [[ $message != "" ]]
+  then
+		if [[ -n $attachment ]]
+    then
 
 			# Set message color
 			message_color="$attachment"
-			if [[ -n $found_pattern_color ]]; then
+			if [[ -n $found_pattern_color ]]
+      then
 				message_color="$found_pattern_color"
 				# Reset with the default color for the next send
 				found_pattern_color="$attachment"
@@ -157,24 +153,28 @@ function send_message()
                           \"mrkdwn_in\": [\"text\", \"fields\"], \
                           \"text\": \"$wrapped_message\""
 
-			if [[ -n $found_pattern_prefix ]]; then
+			if [[ -n $found_pattern_prefix ]]
+      then
 				orig_title=$title
 				title="$found_pattern_prefix $title"
 				# Clear conditional prefix for the nest send
 				found_pattern_prefix=""
 			fi
 
-			if [[ -n $title ]]; then
+			if [[ -n $title ]]
+      then
 				message_attr="$message_attr, \"title\": \"$title\" "
 				# Clear conditional prefix from title
 				title=$orig_title
 			fi
 
-			if [[ -n $link ]]; then
+			if [[ -n $link ]]
+      then
 				message_attr="$message_attr, \"title_link\": \"$link\" "
 			fi
 
-			if [[ $mode == "file" ]]; then
+			if [[ $mode == "file" ]]
+      then
 				fields+=("{\
                                   \"title\": \"Access URL\", \
                                   \"value\": \"$access_url\" }")
@@ -183,9 +183,11 @@ function send_message()
                                   \"value\": \"$download_url\"}")
 			fi
 
-			if [[ ${#fields[@]} != 0 ]]; then
+			if [[ ${#fields[@]} != 0 ]]
+      then
 				message_attr="$message_attr, \"fields\": ["
-				for field in "${fields[@]}"; do
+				for field in "${fields[@]}"
+        do
 					message_attr="$message_attr $field,"
 				done
 				message_attr=${message_attr%?} # Remove last comma
@@ -200,8 +202,10 @@ function send_message()
 
 		icon_url=""
 		icon_emoji=""
-		if [ ! -z $icon ]; then
-			if echo "$icon" | grep -q "^https\?://.*"; then
+		if [ ! -z $icon ]
+    then
+			if echo "$icon" | grep -q "^https\?://.*"
+      then
 				icon_url="$icon"
 			else
 				icon_emoji=":$icon:"
@@ -210,8 +214,10 @@ function send_message()
 
 		username=$(escape_string "$username")
 
-		if [[ $mode == "streaming" ]]; then
-			if [[ -z "$streaming_ts" ]]; then
+		if [[ $mode == "streaming" ]]
+    then
+			if [[ -z "$streaming_ts" ]]
+      then
 				json="{\
 					\"channel\": \"$channel\", \
 					\"username\": \"$username\", \
@@ -219,7 +225,8 @@ function send_message()
 					\"icon_url\": \"$icon_url\" $parseMode}"
 
 				post_result=$(curl -H "Authorization: Bearer $token" -H 'Content-type: application/json; charset=utf-8' -X POST -d "$json" https://slack.com/api/chat.postMessage 2> /dev/null)
-				if [ $(get_ok_in_response $post_result) != "true" ]; then
+				if [ $(get_ok_in_response $post_result) != "true" ]
+        then
 				    write_to_stderr "$post_result"
 				    exit_code=1
 				else
@@ -232,7 +239,8 @@ function send_message()
 			else
 				# batch updates every $streaming_batch_time seconds
 				now=$(date '+%s')
-				if [ -z "$streaming_last_update" ] || [ "$now" -ge $[streaming_last_update + streaming_batch_time] ]; then
+				if [ -z "$streaming_last_update" ] || [ "$now" -ge $((streaming_last_update + streaming_batch_time)) ]
+        then
 					streaming_last_update="$now"
 					json="{\
 						\"channel\": \"$streaming_channel_id\", \
@@ -241,7 +249,8 @@ function send_message()
 						$parseMode}"
 
 					post_result=$(curl -H "Authorization: Bearer $token" -H 'Content-type: application/json; charset=utf-8' -X POST -d "$json" https://slack.com/api/chat.update 2> /dev/null)
-					if [ $(get_ok_in_response $post_result) != "true" ]; then
+					if [ $(get_ok_in_response $post_result) != "true" ]
+          then
 					        write_to_stderr "$post_result"
 						exit_code=1
 					fi
@@ -253,16 +262,19 @@ function send_message()
 				\"username\": \"$username\", \
 				$message_attr \"icon_emoji\": \"$icon_emoji\", \
 				\"icon_url\": \"$icon_url\" $parseMode}"
-			if [[ ! -z $webhook_url ]]; then
+			if [[ ! -z $webhook_url ]]
+      then
 			    # Prioritize the webhook_url for the backward compatibility
 			    post_result=$(curl -X POST --data-urlencode "payload=$json" "$webhook_url" 2> /dev/null)
-			    if [[ $post_result != "ok" ]]; then
+			    if [[ $post_result != "ok" ]]
+          then
 				write_to_stderr "$post_result"
 				exit_code=1
 			    fi
 			else
 			    post_result=$(curl -H "Authorization: Bearer $token" -H 'Content-type: application/json; charset=utf-8' -X POST -d "$json" https://slack.com/api/chat.postMessage 2> /dev/null)
-			    if [ $(get_ok_in_response $post_result) != "true" ]; then
+			    if [ $(get_ok_in_response $post_result) != "true" ]
+          then
 				write_to_stderr "$post_result"
 				exit_code=1
 			    fi
@@ -274,7 +286,8 @@ function send_message()
 function process_line()
 {
 	# do not print message / line if -q option is specified
-	if [[ "$no_output" == "" ]]; then
+	if [[ "$no_output" == "" ]]
+  then
 		echo "$1"
 	fi
 
@@ -283,9 +296,12 @@ function process_line()
 
 	# Check the patterns of the conditional colors
 	# If more than one pattern matches, the latest pattern is used
-	if [[ ${#cond_color_patterns[@]} != 0 ]]; then
-		for i in "${!cond_color_patterns[@]}"; do
-			if [[ $line =~ ${cond_color_patterns[$i]} ]]; then
+	if [[ ${#cond_color_patterns[@]} != 0 ]]
+  then
+		for i in "${!cond_color_patterns[@]}"
+    do
+			if [[ $line =~ ${cond_color_patterns[$i]} ]]
+      then
 				found_pattern_color=${cond_color_colors[$i]}
 			fi
 		done
@@ -293,11 +309,15 @@ function process_line()
 
 	# Check the patterns of the conditional titles
 	# If more than one pattern matches, the latest pattern is used
-	if [[ ${#cond_prefix_patterns[@]} != 0 ]]; then
-		for i in "${!cond_prefix_patterns[@]}"; do
-			if [[ $line =~ ${cond_prefix_patterns[$i]} ]]; then
+	if [[ ${#cond_prefix_patterns[@]} != 0 ]]
+  then
+		for i in "${!cond_prefix_patterns[@]}"
+    do
+			if [[ $line =~ ${cond_prefix_patterns[$i]} ]]
+      then
 				found_pattern_prefix=${cond_prefix_prefixes[$i]}
-				if [[ -n $attachment || $mode != "no-buffering" ]]; then
+				if [[ -n $attachment || $mode != "no-buffering" ]]
+        then
 					# Append a line break to the prefix for better formatting
 					found_pattern_prefix="$found_pattern_prefix\n"
 				else
@@ -308,37 +328,46 @@ function process_line()
 		done
 	fi
 
-	if [[ $mode == "no-buffering" ]]; then
+	if [[ $mode == "no-buffering" ]]
+  then
 		prefix=''
-		if [[ -z $attachment ]]; then
+		if [[ -z $attachment ]]
+    then
 			prefix=$title
 		fi
 		send_message "$prefix$line"
-	elif [[ $mode == "file" ]]; then
+	elif [[ $mode == "file" ]]
+  then
 		# We should use unescaped value in the file mode
 		echo "$1" >> "$filename"
-	elif [[ $mode == "buffering" ]]; then
-		if [[ -z "$text" ]]; then
+	elif [[ $mode == "buffering" ]]
+  then
+		if [[ -z "$text" ]]
+    then
 			text="$line"
 		else
 			# See https://api.slack.com/rtm#limits for details on character limits
 			local message="$text\n$line"
-			if [[ ${#message} -ge 4000 ]]; then
+			if [[ ${#message} -ge 4000 ]]
+      then
 				send_message "$text"
 				text="$line"
 			else
 				text=$(echo "$text\n$line")
 			fi
 		fi
-	elif [[ $mode == "streaming" ]]; then
+	elif [[ $mode == "streaming" ]]
+  then
 		# Keep the latest matched pattern and use it for sending message
 		# "$attachment" is the default value
-		if [[ -z $last_found_pattern_color || $found_pattern_color != "$attachment" ]]; then
+		if [[ -z $last_found_pattern_color || $found_pattern_color != "$attachment" ]]
+    then
 			last_found_pattern_color=$found_pattern_color
 		fi
 		found_pattern_color=$last_found_pattern_color
 
-		if [[ -z "$text" ]]; then
+		if [[ -z "$text" ]]
+    then
 			text="$line"
 		else
 			text=$(echo "$text\n$line")
@@ -352,11 +381,13 @@ function process_line()
 
 function setup()
 {
-	if [[ -z "$HOME" ]]; then
+	if [[ -z "$HOME" ]]
+  then
 		err_exit 1 "\$HOME is not defined. Please set it first."
 	fi
 
-        if [[ -z $(command -v curl) ]]; then
+        if [[ -z $(command -v curl) ]]
+        then
             read -p "curl is not installed, do you want to install it? [y/n] :" choice
                 case "$choice" in
                         y|Y )
@@ -375,7 +406,8 @@ function setup()
                                 else
                                     err_exit 1 "Don't know how to install curl, please install it first."
                                 fi
-                                if [[ "$result" == "0" ]]; then
+                                if [[ "$result" == "0" ]]
+                                then
                                     echo "curl successfully installed."
                                 else
                                     err_exit 1 "curl failed to install, exit code was \"$result\". Please install it first."
@@ -389,7 +421,8 @@ function setup()
 
 	local_conf="$HOME/.slacktee"
 
-	if [[ -e "$local_conf" ]]; then
+	if [[ -e "$local_conf" ]]
+  then
 		echo ".slacktee is found in your home directory."
 		read -p "Are you sure to overwrite it? [y/n] :" choice
 		case "$choice" in
@@ -407,29 +440,36 @@ function setup()
 
 	# Start setup
 	read -p "Token [$token]: " input_token
-	if [[ -z "$input_token" ]]; then
+	if [[ -z "$input_token" ]]
+  then
 		input_token=$token
 	fi
 	read -p "Temporary Directory [$tmp_dir]: " input_tmp_dir
-	if [[ -z "$input_tmp_dir" ]]; then
+	if [[ -z "$input_tmp_dir" ]]
+  then
 		input_tmp_dir=$tmp_dir
 	fi
 	read -p "Default Channel [$channel]: " input_channel
-	if [[ -z "$input_channel" ]]; then
+	if [[ -z "$input_channel" ]]
+  then
 		input_channel=$channel
 	fi
 	read -p "Default Username [$username]: " input_username
-	if [[ -z "$input_username" ]]; then
+	if [[ -z "$input_username" ]]
+  then
 		input_username=$username
 	fi
 	read -p "Default Icon: [$icon]: " input_icon
-	if [[ -z "$input_icon" ]]; then
+	if [[ -z "$input_icon" ]]
+  then
 		input_icon=$icon
 	fi
 	read -p "Default color of the attachment. (empty string disables attachment) [$attachment]: " input_attachment
-	if [[ -z "$input_attachment" ]]; then
+	if [[ -z "$input_attachment" ]]
+  then
 		input_attachment=$attachment
-	elif [[ $input_attachment == '""' || $input_attachment == "''" ]]; then
+	elif [[ $input_attachment == '""' || $input_attachment == "''" ]]
+  then
 		input_attachment=""
 	fi
 
@@ -449,7 +489,8 @@ EOF
 # ----------
 function parse_args()
 {
-	while [[ $# -gt 0 ]]; do
+	while [[ $# -gt 0 ]]
+  do
 		opt="$1"
 		shift
 
@@ -642,55 +683,66 @@ function parse_args()
 # ---------
 function setup_environment()
 {
-	if [[ -e "/etc/slacktee.conf" ]]; then
+	if [[ -e "/etc/slacktee.conf" ]]
+  then
 		. /etc/slacktee.conf
 	fi
 
 	# backwards compat
-	if [[ -z "$token" ]]; then
+	if [[ -z "$token" ]]
+  then
 		token="$upload_token"
 	fi
 
-	if [[ -n "$HOME" && -e "$HOME/.slacktee" ]]; then
+	if [[ -n "$HOME" && -e "$HOME/.slacktee" ]]
+  then
 		. "$HOME/.slacktee"
 	fi
 
-	if [[ -e "$CUSTOM_CONFIG" ]]; then
+	if [[ -e "$CUSTOM_CONFIG" ]]
+  then
 		. $CUSTOM_CONFIG
 	fi
 
 	# Overwrite webhook_url if the environment variable SLACKTEE_WEBHOOK is set
-	if [[ "$SLACKTEE_WEBHOOK" != "" ]]; then
+	if [[ "$SLACKTEE_WEBHOOK" != "" ]]
+  then
 		webhook_url="$SLACKTEE_WEBHOOK"
 	fi
 
 	# Overwrite upload_token if the environment variable SLACKTEE_TOKEN is set
-	if [[ "$SLACKTEE_TOKEN" != "" ]]; then
+	if [[ "$SLACKTEE_TOKEN" != "" ]]
+  then
 		token="$SLACKTEE_TOKEN"
 	fi
 
 	# Overwrite channel if it's specified in the command line option
-	if [[ "$opt_channel" != "" ]]; then
+	if [[ "$opt_channel" != "" ]]
+  then
 		channel="$opt_channel"
 	fi
 
 	# Overwrite username if it's specified in the command line option
-	if [[ "$opt_username" != "" ]]; then
+	if [[ "$opt_username" != "" ]]
+  then
 		username="$opt_username"
 	fi
 
 	# Overwrite icon if it's specified in the command line option
-	if [[ "$opt_icon" != "" ]]; then
+	if [[ "$opt_icon" != "" ]]
+  then
 		icon="$opt_icon"
 	fi
 
 	# Overwrite attachment if it's specified in the command line option
-	if [[ "$opt_attachment" != "" ]]; then
+	if [[ "$opt_attachment" != "" ]]
+  then
 		attachment="$opt_attachment"
 	fi
 
 	# Set the default color to attachment if it's still empty and the length of the cond_color_patterns is not 0
-	if [[ -z $attachment ]] && [[ ${#cond_color_patterns[@]} != 0 ]]; then
+	if [[ -z $attachment ]] && [[ ${#cond_color_patterns[@]} != 0 ]]
+  then
 		attachment="$internal_default_color"
 	fi
 }
@@ -700,29 +752,36 @@ function setup_environment()
 # ----------
 function check_configuration()
 {
-	if [[ -z $(command -v curl) ]]; then
+	if [[ -z $(command -v curl) ]]
+  then
 		err_exit 1 "curl is not installed. Please install it first."
 	fi
 
-	if [[ $webhook_url == "" && $token == "" ]]; then
+	if [[ $webhook_url == "" && $token == "" ]]
+  then
 		err_exit 1 "Please setup the authentication token or the incoming webhook url (deprecated)."
 	fi
 
-	if [[ $token == "" && $mode == "file" ]]; then
+	if [[ $token == "" && $mode == "file" ]]
+  then
 		err_exit 1 "Please provide the authentication token for file uploads."
 	fi
 
-	if [[ $token == "" && $mode == "streaming" ]]; then
+	if [[ $token == "" && $mode == "streaming" ]]
+  then
 		err_exit 1 "Please provide the authentication token for streaming."
 	fi
 
-	if [[ $channel == "" ]]; then
+	if [[ $channel == "" ]]
+  then
 		err_exit 1 "Please specify a channel."
-	elif [[ ( "$channel" != "#"* ) && ( "$channel" != "@"* ) ]]; then
+	elif [[ ( "$channel" != "#"* ) && ( "$channel" != "@"* ) ]]
+  then
 		channel="#$channel"
 	fi
 
-	if [[ -n "$icon" ]]; then
+	if [[ -n "$icon" ]]
+  then
 		icon=${icon#:} # remove leading ':'
 		icon=${icon%:} # remove trailing ':'
 	fi
@@ -746,9 +805,11 @@ function main()
 	trap handle_signal SIGINT SIGTERM SIGKILL
 
 	text=""
-	if [[ -n "$title" || -n "$link" ]]; then
+	if [[ -n "$title" || -n "$link" ]]
+  then
 		# Use link as title, if title is not specified
-		if [[ -z "$title" ]]; then
+		if [[ -z "$title" ]]
+    then
 			title="$link"
 		fi
 
@@ -756,25 +817,32 @@ function main()
 		title=$(escape_string "$title")
 
 		# Add title to filename in the file mode
-		if [[ "$mode" == "file" ]]; then
+		if [[ "$mode" == "file" ]]
+    then
 			# Remove special characters for the file title
 			filetitle=$(echo "$title"|sed 's/[ \/:."]//g'|sed "s/'//g")
 			filetitle="$filetitle-"
 		fi
 
-		if [[ -z "$attachment" ]]; then
-			if [[ "$mode" == "no-buffering" ]]; then
-				if [[ -n "$link" ]]; then
+		if [[ -z "$attachment" ]]
+    then
+			if [[ "$mode" == "no-buffering" ]]
+      then
+				if [[ -n "$link" ]]
+        then
 					title="<$link|$title>: "
 				else
 					title="$title: "
 				fi
-			elif [[ "$mode" == "file" ]]; then
-				if [[ -n "$link" ]]; then
+			elif [[ "$mode" == "file" ]]
+      then
+				if [[ -n "$link" ]]
+        then
 					title="<$link|$title>"
 				fi
 			else
-				if [[ -n "$link" ]]; then
+				if [[ -n "$link" ]]
+        then
 					text="-- <$link|$title> --\n"
 				else
 					text="-- $title --\n"
@@ -786,42 +854,53 @@ function main()
 	timestamp="$(date +'%m%d%Y-%H%M%S')"
 	filename="$tmp_dir/$filetitle$$-$timestamp.log"
 
-	if [[ "$mode" == "file" ]]; then
+	if [[ "$mode" == "file" ]]
+  then
 		touch $filename
 	fi
 
-	while IFS='' read -r line; do
+	while IFS='' read -r line
+  do
 		process_line "$line"
 	done
-	if [[ -n $line ]]; then
+	if [[ -n $line ]]
+  then
 		process_line "$line"
 	fi
 
-	if [[ "$mode" == "buffering" ]]; then
+	if [[ "$mode" == "buffering" ]]
+  then
 		send_message "$text"
-	elif [[ "$mode" == "streaming" ]]; then
+	elif [[ "$mode" == "streaming" ]]
+  then
 		# Unset last updated time for flashing buffer
 		unset streaming_last_update
 		# Use the latest matched color
 		found_pattern_color=$last_found_pattern_color
 		send_message "$text"
-	elif [[ "$mode" == "file" ]]; then
-		if [[ -s "$filename" ]]; then
+	elif [[ "$mode" == "file" ]]
+  then
+		if [[ -s "$filename" ]]
+    then
 			channels_param=""
-			if [[ ( "$channel" == "#"* ) ]]; then
+			if [[ ( "$channel" == "#"* ) ]]
+      then
 				# Set channels for making the file public
 				channels_param="-F channels=$channel"
 			fi
 			upload_result="$(curl -F file=@"$filename" -F token="$token" $channels_param https://slack.com/api/files.upload 2> /dev/null)"
-			if [ $(get_ok_in_response $upload_result) != "true" ]; then
+			if [ $(get_ok_in_response $upload_result) != "true" ]
+      then
 			    err_exit 1 $upload_result
 			fi
 			access_url="$(echo "$upload_result" | awk 'match($0, /url_private":"([^"]*)"/) {print substr($0, RSTART+14, RLENGTH-15)}'|sed 's/\\//g')"
 			download_url="$(echo "$upload_result" | awk 'match($0, /url_private_download":"([^"]*)"/) {print substr($0, RSTART+23, RLENGTH-24)}'|sed 's/\\//g')"
-			if [[ -n "$attachment" ]]; then
+			if [[ -n "$attachment" ]]
+      then
 				text="Input file has been uploaded"
 			else
-				if [[ "$title" != "" ]]; then
+				if [[ "$title" != "" ]]
+        then
 					title=" of $title"
 				fi
 				text="Input file$title has been uploaded.\n$access_url\n\nYou can download it from the link below.\n$download_url"
