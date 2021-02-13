@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# BaSH wrapper for using Thycotic SSH Proxy python script with environment variables.
+
+THYCOTIC_SSHPROXY="/usr/local/bin/thycotic_sshproxy.py"
+LOGIN_TRACKER="${HOME}/.login"
+
+function opon(){
+  source "${LOGIN_TRACKER}"
+  if [ $(( ${OP_SESSION_LIFETIME} - $(date +%s) )) -lt 30 ]
+  then
+    eval $(op signin my)
+    export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
+    {
+      echo -e "export OP_SESSION_my=${OP_SESSION_my}"
+      echo -e "export OP_SESSION_LIFETIME=${OP_SESSION_LIFETIME}"
+    } > "${LOGIN_TRACKER}"
+    source "${LOGIN_TRACKER}"
+  fi
+}
+
+function getpwd(){
+  opon
+  op get item --fields password "$1"  --vault "$2"
+}
+
+if [[ -z ${THYCOTIC_USER} ]] || [[ -z ${THYCOTIC_URL}  ]] || [[ -z ${ENTERPRISE_USER} ]] || [[ -z ${OP_ENTERPRISE_PWD} ]]
+then
+  echo -e "\n!!! One or more important variables missing. Please set the following:\n"
+  echo -e " THYCOTIC_USER, THYCOTIC_URL, ENTERPRISE_USER and OP_ENTERPRISE_PWD"
+  echo -e "\nIn your shell profile configuration, e.g. .bash_profile as follows:\n"
+  echo -e 'export THYCOTIC_USER="domain\\mythycoticusername"'
+  echo -e 'export THYCOTIC_URL="https://thycotic.servrer.com"'
+  echo -e 'export ENTERPRISE_USER="domain\\myenterpriseusername"'
+  echo -e 'export OP_ENTERPRISE_PWD="$(getpwd enterpriseentry)"'
+  echo -e "\nIf you don't want OP_ENTERPRISE_PWD stored as part of your environment you can replace the following:"
+  echo -e '\t-p "${OP_ENTERPRISE_PWD}"\n'
+  echo -e 'with:\n\t-p "$(getpwd enterpriseentry)"\n\non line 51 of /usr/local/bin/thyssh; then remove all references to OP_ENTERPRISE_PWD cleanly.'
+  echo -e "\n"
+  exit 1
+fi
+
+${THYCOTIC_SSHPROXY} -t ${THYCOTIC_URL} -u ${ENTERPRISE_USER} -s ${THYCOTIC_USER} -p "${OP_ENTERPRISE_PWD}" -d "$@"
