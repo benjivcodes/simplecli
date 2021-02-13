@@ -115,5 +115,4 @@ cat <<EOF > "$APPDIR/Info.plist"
 </plist>
 EOF
 
-echo "Application bundle created at '$PWD/$APPNAME.app'"
-echo
+echo -e "Application bundle created at '$PWD/$APPNAME.app'\n"

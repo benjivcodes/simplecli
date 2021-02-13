@@ -43,7 +43,7 @@ function secure_handle(){
 
     -i)
       shift;
-      if [ -z $1 ]
+      if [[ -z $1 ]]
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1
@@ -58,7 +58,7 @@ function secure_handle(){
     -e)
       passwdcheck
       shift;
-      if [ -z $1 ]
+      if [[ -z $1 ]]
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1
@@ -72,7 +72,7 @@ function secure_handle(){
     -d)
       passwdcheck
       shift;
-      if [ -z $1 ]
+      if [[ -z $1 ]]
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1

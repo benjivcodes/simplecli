@@ -12,23 +12,6 @@ function update_help() {
   echo -e " help      this message"
 }
 
-### This update check function is unused given how the installer works currently.
-### ToDo: refactor install and source references to allow this to be functional.
-###
-#function check_for_available_updates(){
-#  cd "${cli_lib}" || exit 1
-#  if [[ ! -f .git ]]; then
-#    (>&2 echo -e "Local install is not part of a git repository. Skipping self-update.")
-#  else
-#    local_revision=$(git rev-parse @)
-#    remote_revision=$(git ls-remote https://github.com/benjivcodes/simplecli.git | head -1 | sed -e "s/HEAD//" -e 's/[[:space:]]*$//')
-#    if [[ "${local_revision}" != "${remote_revision}" ]]; then
-#      should_update="true"
-#      (>&2 echo -e "${red}The SimpleCLI is NOT up-to-date${normal}")
-#    fi
-#  fi
-#}
-
 function update_handle(){
   echo -e "Running self-update..."
   temp_dir="$(mktemp -d)"

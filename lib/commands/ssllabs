@@ -8,7 +8,7 @@ function ssllabs_description(){
 function ssllabs_help(){
   echo -e "\n usage: $(basename "$0") ssllabs <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS: \n"
-  echo " -t     Scans <target> site and returns grade"
+  echo " site     Scans <target> site and returns grade"
   echo ""
 }
 
@@ -16,7 +16,7 @@ function ssllabs_handle(){
   command="$1"
 
   case "$command" in
-    -t)
+    site)
     shift;
     if [[ -z "${GOROOT}" || -z "${GOPATH}" ]]
     then
@@ -28,10 +28,6 @@ function ssllabs_handle(){
     ;;
 
     help)
-      ssllabs_help
-    ;;
-
-    *)
       ssllabs_help
     ;;
  esac 

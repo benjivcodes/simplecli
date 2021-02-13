@@ -27,7 +27,7 @@ function git_handle(){
       shift;
       cd "$1" || exit 1
       clear
-      if [ -d .git ]
+      if [[ -d .git ]]
       then
         {
           echo "==== This output is displayed with LESS ==="
@@ -45,8 +45,8 @@ function git_handle(){
     ;;
 
     nb)
-      git checkout master
-      git pull
+      git checkout --quiet master
+      git pull --quiet
       shift;
       git checkout -b "$1"
     ;;
@@ -56,8 +56,8 @@ function git_handle(){
     ;;
 
     dm)
-      git checkout master
-      git pull
+      git checkout --quiet master
+      git pull --quiet
       git branch --merged | grep -vi master > "${MERGED_BRANCHES}"
       xargs git branch -d < "${MERGED_BRANCHES}"
       rm -f "${MERGED_BRANCHES}"

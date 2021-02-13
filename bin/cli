@@ -64,6 +64,10 @@ case $command in
   help)
     help
   ;;
+
+  -h)
+    help
+  ;;
   
   *)
     handle_command "$@"

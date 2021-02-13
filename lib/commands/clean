@@ -108,6 +108,7 @@ function clean_handle(){
 
     core)
       clean_macos
+      
     ;;
 
     dns)

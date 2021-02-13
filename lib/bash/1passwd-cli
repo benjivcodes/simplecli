@@ -23,6 +23,17 @@ function opoff(){
   touch "${LOGIN_TRACKER}"
 }
 
+function op_update(){
+  opoff
+  cd "/tmp" || exit 1
+  rm -f op_darwin*
+  wget --quiet $(lynx -dump -listonly https://app-updates.agilebits.com/product_history/CLI \
+    | grep ^"\ \ \ 2" \
+    | sed -r 's/^\ \ \ [0-9]+\. //')
+  sudo installer -pkg $(ls op_darwin_amd64*) -target /
+  rm -f op_darwin*
+}
+
 function listkeys(){
   opon
   op list items --categories "Secure Note" "$1" --vault "$2" | op get item - --fields title | grep -i "ssh-key"
@@ -65,14 +76,4 @@ function gettoken(){
 function getmfa(){
   opon
   op get totp "$1" --vault "$2" | pbcopy -Prefer txt
-}
-
-function update_op(){
-  opoff
-  cd "/tmp" || exit 1
-  rm -f op_darwin*
-  wget $(lynx -dump -listonly https://app-updates.agilebits.com/product_history/CLI \
-    | grep ^"\ \ \ 2" \
-    | sed -r 's/^\ \ \ [0-9]+\. //')
-  sudo installer -pkg $(ls op_darwin_amd64*) -target /
 }

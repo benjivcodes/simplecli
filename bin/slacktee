@@ -67,7 +67,7 @@ function write_to_stderr(){
 function err_exit(){
 	local code=$1
 	shift
-	write_to_stderr $@
+	write_to_stderr "$@"
 	exit $code
 }
 
@@ -132,7 +132,7 @@ function send_message(){
 		found_pattern_prefix=""
 	fi
 
-	wrapped_message=$(echo "$textWrapper\n$message\n$textWrapper")
+	wrapped_message=$(echo -e "$textWrapper\n$message\n$textWrapper")
 	message_attr=""
 	if [[ $message != "" ]]
   then
@@ -202,7 +202,7 @@ function send_message(){
 
 		icon_url=""
 		icon_emoji=""
-		if [ ! -z $icon ]
+		if [ -n "$icon" ]
     then
 			if echo "$icon" | grep -q "^https\?://.*"
       then
@@ -353,7 +353,7 @@ function process_line()
 				send_message "$text"
 				text="$line"
 			else
-				text=$(echo "$text\n$line")
+				text=$(echo -e "$text\n$line")
 			fi
 		fi
 	elif [[ $mode == "streaming" ]]
@@ -370,7 +370,7 @@ function process_line()
     then
 			text="$line"
 		else
-			text=$(echo "$text\n$line")
+			text=$(echo -e "$text\n$line")
 		fi
 
 		send_message "$text"
@@ -391,16 +391,16 @@ function setup()
             read -p "curl is not installed, do you want to install it? [y/n] :" choice
                 case "$choice" in
                         y|Y )
-                                if [[ ! -z $(command -v dnf) ]]; then
+                                if [[ -n "$(command -v dnf)" ]]; then
                                     dnf -y install curl > /dev/null 2>&1
                                     result=$?
-                                elif [[ ! -z $(command -v yum) ]]; then
+                                elif [[ -n "$(command -v yum)" ]]; then
                                     yum -y install curl > /dev/null 2>&1
                                     result=$?
-                                elif [[ ! -z $(command -v apt-get) ]]; then
+                                elif [[ -n "$(command -v apt-get)" ]]; then
                                     apt-get -y install curl > /dev/null 2>&1
                                     result=$?
-                                elif [[ ! -z $(command -v pacman) ]]; then
+                                elif [[ -n "$(command -v pacman)" ]]; then
                                     pacman --noconfirm --sync curl > /dev/null 2>&1
                                     result=$?
                                 else
@@ -802,7 +802,7 @@ function main()
 	parse_args "$@"
 	setup_environment
 	check_configuration
-	trap handle_signal SIGINT SIGTERM SIGKILL
+	trap handle_signal SIGINT SIGTERM
 
 	text=""
 	if [[ -n "$title" || -n "$link" ]]

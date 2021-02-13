@@ -3,21 +3,23 @@
 # MHA https://github.com/lnxg33k/email-header-analyzer
 
 # Let's keep the current working directory safe
-pushd +0 . || exit 1
+pushd . > /dev/null || exit 1
 
 # Fetch Mail Header Analyzer (MHA)
 cd /tmp || exit 1
-rm -fr mailheaderanalyzer
-mkdir mailheaderanalyzer
-git clone https://github.com/lnxg33k/email-header-analyzer.git mailheaderanalyzer
 
-# Install Python requirements
-cd /tmp/mailheaderanalyzer || exit 1
-pip install -r requirements.txt
+if [[ -e mailheaderanalyzer ]]
+then
+  cd mailheaderanalyzer || exit 1
+  git checkout --quiet master
+  git pull --quiet
+else
+  mkdir mailheaderanalyzer
+  git clone --quiet https://github.com/lnxg33k/email-header-analyzer.git mailheaderanalyzer
+  cd mailheaderanalyzer || exit 1
+  sudo -H pip --quiet install -r requirements.txt
+fi
 
-# Launch MHA flask server
+# Launch MHA flask server then Return us to the working directory on exit
 cd /tmp/mailheaderanalyzer/mha || exit 1
-python server.py -d
-
-# Return us to the working directory on exit
-popd || exit 1
+python server.py -d && popd > /dev/null || exit 1
