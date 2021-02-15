@@ -13,11 +13,13 @@ command_dir="${cli_lib}/commands"
 available_commands=()
 
 function source_commands(){
-  for c in $(/bin/ls ${command_dir}); do
+  for c in $(/bin/ls ${command_dir})
+  do
     available_commands+=("${c}")
   done
 
-  for f in "${command_dir}"/*; do
+  for f in "${command_dir}"/*
+  do
     source "$f"
   done
 }
@@ -25,7 +27,8 @@ function source_commands(){
 function handle_command(){
   source_commands
 
-  if [[ $# -lt 1 ]]; then
+  if [[ $# -lt 1 ]]
+  then
     usage
   else
     command="$1"
@@ -49,7 +52,8 @@ function help(){
   echo -e "\n AVAILABLE COMMANDS$\n"
 
   source_commands
-  for command in "${available_commands[@]}"; do
+  for command in "${available_commands[@]}"
+  do
     echo -e "  ${command} :::: $(${command}_description)"
   done
    echo ""
@@ -58,6 +62,10 @@ function help(){
 command="$1"
 case $command in
   help)
+    help
+  ;;
+
+  -h)
     help
   ;;
   

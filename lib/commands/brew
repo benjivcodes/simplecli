@@ -16,17 +16,7 @@ function brew_help(){
   echo " help        this message"
 	echo ""
 }
-function brew_maint(){
-  # Check if brew is installed and perform maintainance
-  command -v brew || exit 1
-  brew update
-  brew upgrade
-  brew cask upgrade
-  brew cask outdated | cut -f 1 | xargs brew cask reinstall
-  brew doctor
-  brew missing
-  brew cleanup -s
-}
+
 function brew_handle(){
   command="$1"
 
@@ -34,19 +24,6 @@ function brew_handle(){
     bootstrap)
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
       xargs brew install < "${CLIHOME}/brew_bootstrap_packages.txt"
-      brew cask install android-sdk
-      brew cask install android-platform-tools
-      brew cask install java
-    ;;
-
-    fix)
-      pushd +0 . || exit 1
-      cd /usr/local || exit 1
-      git remote add origin https://github.com/Homebrew/brew.git > /dev/null 2>&1
-      git fetch origin > /dev/null 2>&1
-      git reset --hard origin/master > /dev/null 2>&1
-      brew_maint
-      popd || exit 1
     ;;
 
     remove)
@@ -54,11 +31,16 @@ function brew_handle(){
     ;;
 
     maint)
-      brew_maint
+      command -v brew || exit 1
+      brew update --quiet
+      brew upgrade --quiet
+      brew doctor
+      brew missing
+      brew cleanup -s
     ;;
 
     multi)
-      echo -e "\nYou will need to add users to the group 'admin'"
+      echo -e "\nYou will need to add users to the group 'admin'."
       sudo chgrp -R admin $(brew --prefix) $(brew --prefix)/Cellar
       sudo chmod -R g+rwX $(brew --prefix) $(brew --prefix)/Cellar
     ;;

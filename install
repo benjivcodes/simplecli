@@ -6,7 +6,6 @@ DIR="$(pwd)"
 INSTALLDIR="/usr/local"
 
 function install() {
-  rm -f appify  cli  con  headerchk  mbox2imap  slacktee  ssllabs-scan-v3
   mkdir -p "${INSTALLDIR}/bin"
 
   rm -fr "${INSTALLDIR}/lib/simplecli"
@@ -15,7 +14,13 @@ function install() {
   rsync -azh "${DIR}/bin/" "${INSTALLDIR}/bin/"
   rsync -azh "${DIR}/lib/" "${INSTALLDIR}/lib/simplecli/"
 
-  if [[ -d "${DIR}/.git" ]]; then
+  cd /usr/local/bin || exit 1
+  chmod +x appify  cli  con  headerchk  mbox2imap  slacktee  ssllabs-scan-v3 thycotic_sshproxy
+
+  sudo -H pip3 --quiet install pexpect requests certifi
+
+  if [[ -d "${DIR}/.git" ]]
+  then
     rsync -azh "${DIR}/.git" "${INSTALLDIR}/lib/simplecli/"
   fi
 

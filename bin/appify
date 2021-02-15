@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
+# Make a script behave more like a macOS application
 
 VERSION=4.0.1
-SCRIPT=`basename "$0"`
+SCRIPT=$(basename "$0")
 APPNAME="My App"
 APPICONS="/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns"
-OSX_VERSION=`sw_vers -productVersion`
-PWD=`pwd`
+OSX_VERSION=$(sw_vers -productVersion)
+PWD=$(pwd)
 
 function usage {
 	cat <<EOF
@@ -114,5 +115,4 @@ cat <<EOF > "$APPDIR/Info.plist"
 </plist>
 EOF
 
-echo "Application bundle created at '$PWD/$APPNAME.app'"
-echo
+echo -e "Application bundle created at '$PWD/$APPNAME.app'\n"
