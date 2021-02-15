@@ -49,7 +49,7 @@ function getsshkey.pub(){
 
 function getpwd(){
   opon
-  op get item --fields password "$1"  --vault "$2" | pbcopy -Prefer txt
+  op get item --fields password "$1"  --vault "$2"
 }
 
 function getuser(){
