@@ -13,6 +13,7 @@ function clean_help(){
   echo " dns         remove DNS cache, if possible"
   echo " mem         purge unused pages and return them to free pool"
   echo " xauth       reset the Xauth control file"
+  echo " spotlight   rebuild Spotlight indexes on all volumes"
   echo " help        this message"
   echo ""
 }
@@ -95,6 +96,11 @@ function clean_mem(){
 
 }
 
+function clean_spotlight(){
+  echo " !! Reindexing Spotlight on all mounted volumes !!"
+  sudo mdutil -E /
+}
+
 function clean_handle(){
   command="$1"
 
@@ -120,6 +126,10 @@ function clean_handle(){
 
     xauth)
       clean_xauth
+    ;;
+
+    spotlight)
+      clean_spotlight    
     ;;
 
     help)
