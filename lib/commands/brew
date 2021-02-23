@@ -23,7 +23,7 @@ function brew_handle(){
   case $command in
     bootstrap)
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-      xargs brew install < "${CLIHOME}/brew_bootstrap_packages.txt"
+      xargs brew install < "${CLIHOME}/brew_bootstrap_packages"
     ;;
 
     remove)

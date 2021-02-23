@@ -1,5 +1,6 @@
 android-platform-tools
 android-sdk
+bash
 bash-completion
 boost
 coreutils

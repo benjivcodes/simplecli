@@ -8,12 +8,12 @@ function git_description(){
 function git_help(){
   echo -e "\n usage: $(basename "$0") git <subcommand>"
   echo -e "\n AVAILABLE SUBCOMMANDS:\n"
-  echo " info             display some basic info about the git repo; requires directory path, supoorts '.' as current directory"
-  echo " pb               push the current branch checkout"
-  echo " nb               make a new branch from the current master"
-  echo " dm               attempt to delete local copies of merged branches"
-  echo " prb              attempt to delete local copies of gone branches"
-  echo " help             this message"
+  echo " info      display some basic info about the git repo; requires directory path, supoorts '.' as current directory"
+  echo " pb        push the current branch checkout"
+  echo " nb        make a new branch from the current master"
+  echo " dm        attempt to delete local copies of merged branches"
+  echo " prb       attempt to delete local copies of gone branches"
+  echo " help      this message"
   echo ""
 }
 

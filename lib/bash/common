@@ -2,8 +2,9 @@
 # Common functions for BaSH Profile Configuration
 # This should be sourced from the environment configuration, e.g. .bash_profile
 
-# Ensure no core files by default.
+# Ensure no core files by default and default umask
 ulimit -S -c 0
+umask 022
 
 # Set some $PATH stuff
 PATH=/usr/local/opt/openssl/bin:${PATH}
@@ -27,9 +28,8 @@ export LOGIN_TRACKER="${HOME}/.login"
 # Setup some input pre-processing on less.
 export LESSOPEN="|lesspipe.sh %s"
 
-# Let's make Homebrew a litte less chatty
+# Let Homeebrew use GCC
 export HOMEBREW_USE_GCC=1
-export HOMEBREW_VERBOSE=1
 
 # Disable Homebrew Analytics
 export HOMEBREW_NO_ANALYTICS=1
@@ -43,43 +43,19 @@ export HISTFILE="${HOME}/.bash_history"
 export HISTSIZE=100000
 export HISTCONTROL=ignoreboth
 export HISTTIMEFORMAT="%F %T "
+
+# Set some reasonable shell options
 if [[ "${SHELL}" = "/usr/local/bin/bash" ]]
 then
   shopt -s histappend
+  shopt -s checkwinsize
+  [ -e "/usr/local/etc/bash_completion" ] && source "/usr/local/etc/bash_completion"
+  [ -e "/usr/local/etc/bash_completion" ] && complete -cf sudo
+  [ -e "${HOME}/.iterm2_shell_integration.bash" ] && source "${HOME}/.iterm2_shell_integration.bash"
 fi
 
 # Set some basic colors
 export LSCOLORS=gxfxcxdxbxegedabagacad
-
-# Load some completion scripts
-if [[ "${SHELL}" = "/usr/local/bin/bash" ]] && [[ -e "/usr/local/etc/bash_completion" ]]
-then
-  source "/usr/local/etc/bash_completion"
-fi
-
-# If available, source integration support for iterm2
-if [[ "${SHELL}" = "/usr/local/bin/bash" ]] && [[ -e "${HOME}/.iterm2_shell_integration.bash" ]]
-then
-  source "${HOME}/.iterm2_shell_integration.bash"
-fi
-
-# Only on MacOS
-function darwinonly(){
-  if [[ ! "$(uname -s)" == "Darwin" ]]
-  then
-    echo -e "\n This is macOS specific function, sorry.\n"
-    exit 1
-  fi
-}
-
-# Only on Linux
-function linuxonly(){
-  if [[ ! "$(uname -s)" == "Linux" ]]
-  then
-    echo -e "\n This is Linux specific function, sorry.\n"
-    exit 1
-  fi
-}
 
 # Simple file sort
 function sf(){
@@ -125,19 +101,13 @@ function sshagent_testsocket(){
 }
 
 function sshagent_init(){
-  # ssh agent sockets can be attached to a ssh daemon process or an
-  # ssh-agent process.
   AGENTFOUND=0
 
-  # Attempt to find and use the ssh-agent in the current environment
   if sshagent_testsocket
   then
     AGENTFOUND=1
   fi
 
-  # If there is no agent in the environment, search /tmp for
-  # possible agents to reuse before starting a fresh ssh-agent
-  # process.
   if [[ ${AGENTFOUND} = 0 ]]
   then
     for AGENTSOCKET in $(sshagent_findsockets)
@@ -147,29 +117,13 @@ function sshagent_init(){
     done
   fi
 
-  # If at this point we still haven't located an agent, it's time to
-  # start a new one
   if [[ ${AGENTFOUND} = 0 ]]
   then
     eval $(ssh-agent)
   fi
 
-  # Clean up
   unset AGENTFOUND
   unset AGENTSOCKET
-}
-
-# Update slacktee
-function update_slacktee(){
-  pushd . >/dev/null || exit 1
-  cd /tmp || exit1
-  rm -f "slacktee.sh"
-  curl -s https://api.github.com/repos/coursehero/slacktee/releases/latest \
-    | jq '.zipball_url' \
-    | xargs wget -qic  -A ".zip" -O temp.zip && unzip -q -j -o -u "temp.zip" "*slacktee.sh"
-  mv "slacktee.sh" "/usr/local//bin/slacktee"
-  rm -f "temp.zip"
-  popd >/dev/null || exit 1
 }
 
 # Inject new locations into the first position in $PATH
@@ -218,7 +172,6 @@ function rspaces(){
 
 # Create a password encryped DMG from a folder on MacOS
 function dmgcrypt(){
-  darwinonly
   local vol src
 
   if [[ -z "$1" ]]
@@ -244,7 +197,6 @@ function dmgcrypt(){
 
 # Create an unencryped DMG from a folder on MacOS
 function dmg(){
-  darwinonly
   local vol src
 
   if [[ -z "$1" ]]
@@ -310,7 +262,7 @@ function colortest(){
 
 # Single use invocation of ClamScan
 function scanthis(){
-  darwinonly
+  
   [ ! -e "/usr/local/bin/freshclam" ] && brew install clamav > /dev/null 2>&1
   echo -e "\n Updating virus definitions..."
   /usr/local/bin/freshclam --quiet
@@ -320,7 +272,6 @@ function scanthis(){
 
 # Remove the hidden file attribute
 function unhide(){
-  darwinonly
   sudo chflags nohidden "$1"
 }
 
@@ -384,25 +335,6 @@ alias vi='/usr/bin/vim -X'
 alias vim='/usr/bin/vim -X'
 alias grep='grep -i --color'
 
-# Set Homebrew Python3 as the deefault python
-alias pip='pip3'
-alias python='python3'
-
-# Try to get lines to wrap correctly.
-if [[ "${SHELL}" = "/bin/bash" ]]
-then
-  shopt -s checkwinsize
-fi
-
-# Set a reasonable umask
-umask 022
-
-# Enable SuDo tab completion
-if [[ "${SHELL}" = "/bin/bash" ]]
-then
-  complete -cf sudo
-fi
-
 # Set shellcheck options
 export SHELLCHECK_OPTS="-x -e SC2145\
  -e SC2155 -e SC2154 -e SC2086\
@@ -425,7 +357,7 @@ fi
 [ -e "${LOGIN_TRACKER}" ] && source "${LOGIN_TRACKER}"
 
 ### Begin BaSH colors ###
-if [[ "${SHELL}" = "/bin/bash" ]]
+if [[ "${SHELL}" = "/usr/local/bin/bash" ]]
 then
   # Reset
   Color_Off='\e[0m' # Text Reset

@@ -36,7 +36,7 @@ then
   echo -e '\t-p "${OP_ENTERPRISE_PWD}"\n'
   echo -e 'with:\n\t-p "$(getpwd enterpriseentry)"\n\non line 51 of /usr/local/bin/thyssh; then remove all references to OP_ENTERPRISE_PWD cleanly.'
   echo -e "\n"
-  exit 1
+  return 1
 fi
 
 ${THYCOTIC_SSHPROXY} -t ${THYCOTIC_URL} -u ${ENTERPRISE_USER} -s ${THYCOTIC_USER} -p "${OP_ENTERPRISE_PWD}" -d "$@"

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# SimpleCLI update script
+
+function selfupdate_description(){
+  echo "Updates the SimpleCLI only"
+}
+
+function selfupdate_help() {
+  echo -e "SimpleCLI SelfUpdate - Updates the SimpleCLI only."
+  echo -e ""
+  echo -e "${bold}AVAILABLE COMMANDS${normal}"
+  echo -e " help      this message"
+}
+
+function selfupdate_handle(){
+  echo -e "Running self-update..."
+  temp_dir="$(mktemp -d)"
+  git clone https://github.com/benjivcodes/simplecli.git ${temp_dir}
+  if [[ $? != 0 ]]
+  then
+    echo -e "Unable to clone CLI repository. Skipping self-update."
+  else
+    ${temp_dir}/install
+  fi
+
+  echo -e "Removing ${temp_dir}"
+  rm -fr "${temp_dir}"
+
+  source "${HOME}/.bash_profile"
+}

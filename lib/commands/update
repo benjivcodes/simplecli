@@ -2,27 +2,60 @@
 # SimpleCLI update script
 
 function update_description(){
-  echo "Updates the SimpleCLI"
+  echo "Updates tools SimpleCLI uses and/or depends on."
 }
 
 function update_help() {
-  echo -e "SimpleCLI Update - Updates the SimpleCLI"
+  echo -e "SimpleCLI Update - Updates tools SimpleCLI uses and/or depends on; to update SimpleCLI use SelfUpdate."
   echo -e ""
   echo -e "${bold}AVAILABLE COMMANDS${normal}"
   echo -e " help      this message"
 }
 
-function update_handle(){
-  echo -e "Running self-update..."
-  temp_dir="$(mktemp -d)"
-  git clone https://github.com/benjivcodes/simplecli.git ${temp_dir}
-  if [[ $? != 0 ]]
-  then
-    echo -e "Unable to clone CLI repository. Skipping self-update."
-  else
-    ${temp_dir}/install
-  fi
+# Update slacktee
+function update_slacktee(){
+  pushd . >/dev/null || exit 1
+  cd /tmp || exit1
+  rm -f "slacktee.sh"
+  curl -s https://api.github.com/repos/coursehero/slacktee/releases/latest \
+    | jq '.zipball_url' \
+    | xargs wget -qic  -A ".zip" -O temp.zip && unzip -q -j -o -u "temp.zip" "*slacktee.sh"
+  mv "slacktee.sh" "/usr/local//bin/slacktee"
+  rm -f "temp.zip"
+  popd >/dev/null || exit 1
+}
 
-  echo -e "Removing ${temp_dir}"
-  rm -fr "${temp_dir}"
+# Update the 1password CLI
+function update_1passwordcli(){
+  opoff
+  cd "/tmp" || exit 1
+  rm -f op_darwin*
+  wget --quiet $(lynx -dump -listonly https://app-updates.agilebits.com/product_history/CLI \
+    | grep ^"\ \ \ 2" \
+    | sed -r 's/^\ \ \ [0-9]+\. //')
+  sudo installer -pkg $(ls op_darwin_amd64*) -target /
+  rm -f op_darwin*
+}
+
+function update_handle(){
+  command="$1"
+
+  case "$command" in
+    slacktee)
+      update_slacktee
+    ;;
+
+    1password)
+      update_1passwordcli
+    ;;
+
+    help)
+      update_help
+    ;;
+
+    *)
+      update_help
+    ;;
+
+  esac
 }
