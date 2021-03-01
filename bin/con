@@ -42,8 +42,8 @@ function vpncheck(){
     echo -e "\nExpected VPN_DEFAULT_GW to be set, exiting!"
   fi
 
-  command -v "netstat -nr -f inet | grep -i ^default | grep -i -q ${VPN_DEFAULT_GW}"
-  if [[ "$?" -gt 0 ]]
+  
+  if [[ "$(netstat -nr -f inet | grep -i ^default | grep -i -q ${VPN_DEFAULT_GW})" -gt 0 ]]
   then
     echo -e "\nDoesn't look like you're connected to correct VPN!\n"
   fi
