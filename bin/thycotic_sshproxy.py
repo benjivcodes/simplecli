@@ -131,10 +131,9 @@ parser.add_argument('-d', '--dest',
                     help='destination server')
 
 parser.add_argument('-p', '--password',
-                    required=False,
+                    required=True,
                     action='store',
-                    help='password as argument')
-
+                    help='destination server')
 
 args = parser.parse_args()
 
@@ -186,3 +185,4 @@ p.setwinsize(termLineCount, termColumnCount)
 p.sendline(sshPassword)
 p.sendline("\r")
 p.interact()
+
