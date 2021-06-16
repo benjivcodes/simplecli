@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1091
+
+# Load the SimpleCLI and 1password-cli functions
+source "${HOME}/.simplecli/lib/bash/common"
+source "${HOME}/.simplecli/lib/bash/1passwd-cli"
+source "/usr/local/etc/profile.d/bash_completion.sh"
+
+# SimpleCLI, configuration variables
+export CLIHOME="${HOME}/.simplecli"
+mkdir -p "${HOME}/workspace"
+export WORKSPACE="${HOME}/workspace"
+
+# Add VS Code to the ${PATH}
+test -e "/Applications/Visual Studio Code.app/Contents/Resources/app/bin" && \
+export PATH=${PATH}:"/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+
+# Development support
+test -e "${HOME}/Library/Python/2.7/bin" && export PATH=${HOME}/Library/Python/2.7/bin:${PATH}
+test -e "${HOME}/Library/Python/3.8/bin" && export PATH=${HOME}/Library/Python/3.8/bin:${PATH}
+test -e /usr/local/opt/go/libexec && export GOROOT="/usr/local/opt/go/libexec"
+test -e /usr/local/opt/go/libexec && export GOPATH="${GOROOT}/bin/go"
+
+# Enable SSH alias tab completion
+complete -F _ssh scp sftp ssh
+
+# Load the prompt
+_prompt_command

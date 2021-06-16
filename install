@@ -3,36 +3,68 @@
 
 cd $(dirname "${BASH_SOURCE[0]}") || return 1
 DIR="$(pwd)"
-INSTALLDIR="/usr/local"
+INSTALLDIR="${HOME}/.simplecli"
 
 function install() {
-  mkdir -p "${INSTALLDIR}/bin"
+  clear
 
-  rm -fr "${INSTALLDIR}/lib/simplecli"
-  mkdir -p "${INSTALLDIR}/lib/simplecli"
-
+  echo -e "Running core install cmds..."
+  mkdir -p "${INSTALLDIR}/bin ${INSTALLDIR}/lib"
   rsync -azh "${DIR}/bin/" "${INSTALLDIR}/bin/"
-  rsync -azh "${DIR}/lib/" "${INSTALLDIR}/lib/simplecli/"
+  rsync -azh "${DIR}/lib/" "${INSTALLDIR}/lib/"
+  cd "${INSTALLDIR}/bin/" || return 1
+  chmod +x ./*
 
-  cd /usr/local/bin || return 1
-  chmod +x appify  cli  con  *headerchk  mbox2imap  slacktee  ssllabs-scan-v3 thycotic_sshproxy
+  echo -e "Running pip3 installs..."
+  cd "${HOME}" || exit 1
+  python3 -m venv "${USER}-env"
+  "${HOME}/bva-env/bin/python3" -m pip install --upgrade pip | { grep -v "already satisfied" || :; }
+  source "${HOME}/${USER}-env/bin/activate"
+  set -o pipefail; pip3 install -r "${DIR}/requirements.txt" | { grep -v "already satisfied" || :; }
+  deactivate
 
-  sudo -H pip3 --quiet install pexpect requests certifi
-
-  if [[ -d "${DIR}/.git" ]]
+  echo -e "\nInstalling BasSH configuration"
+  if [ -e "${HOME}/.bash_profile" ] || [ -e "${HOME}/.bashrc" ]
   then
-    rsync -azh "${DIR}/.git" "${INSTALLDIR}/lib/simplecli/"
+    echo -e "\tBaSH config detected, exiting..."
+    echo -e "\tManaul install commmand:"
+    echo -e "\tAdd the following to your .bash_profile or .bashrc"
+    echo -e "\tsource ${INSTALLDIR}/lib/bash/common"
+    echo -e "\tsource ${INSTALLDIR}/lib/bash/1passwd-cli"
+  else
+    cp "${INSTALLDIR}/lib/bash/bash_profile" "${HOME}/.bash_profile"
   fi
 
-  echo "SimpleCLI successfully installed"
+  echo -e "\n\nSimpleCLI core successfully installed"
 }
 
 function link_bashy(){
   which -a npm > /dev/null || echo -e "\n!!! npm not found, please install NPM or update your PATH"
-  cd /usr/local/lib/simplecli/bashy || echo -e "\n!!! bashy not available, please update SimpleCLI"
+  cd "${INSTALLDIR}/lib/bashy" || echo -e "\n!!! bashy not available, please update SimpleCLI"
+  echo -e "\nLinking Bashy..."
 
-  npm link > /dev/null
-  echo -e "BASHY successfully installed"
+  if [ -e "${HOME}/.npmrc" ]
+  then
+    echo -e "\tnpmrc config detected, exiting Bashy setup..."
+    echo -e "\tManual install command:"
+    echo -e "\tcd ${INSTALLDIR}/lib/bashy && npm link > /dev/null"
+  else
+    export NPM_PACKAGES="${HOME}/.npm-packages"
+    echo "prefix=${HOME}/.npm-packages" > "${HOME}/.npmrc"
+    npm link > /dev/null
+    echo -e "BASHY successfully installed..."
+  fi
+}
+
+function install_homebrew(){
+  echo -e "\nInstalling homebrew..."
+  if [ -e "/usr/local/bin/brew" ]
+  then
+    echo -e "\tHomebrew install detected, exiting..."
+  else
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    xargs brew install < "${INSTALLDIR}/lib//brew_bootstrap_packages" 
+  fi
 }
 
 reset
@@ -43,19 +75,11 @@ then
   echo -e "\nThis is macOS specific CLI; some things will work fine others won't."
   echo -e "Install will continue but you have been warned... \[._.]/"
   echo -en "\nPress enter key to continue."
-  read
+  read -rs
   reset
 fi
+
 install
 link_bashy
-
-echo -e "\n!!! Please add the following to your .bash_profile, or equivalent to use SimpleCLI:"
-echo 'source "/usr/local/lib/simplecli/bash/common"'
-
-echo -e "\n!!! If you would like to use included 1password cli functions then add the following as well:"
-echo 'source "/usr/local/lib/simplecli/bash/1passwd-cli"'
-
-echo -e "\nA very basic Homebrew bootstrap is available via: 'cli brew bootstrap'"
-source "${HOME}/.bash_profile"
-echo ""
+install_homebrew
 

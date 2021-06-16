@@ -23,7 +23,7 @@ export PATH
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export CLIHOME="/usr/local/lib/simplecli"
-export LOGIN_TRACKER="${HOME}/.login"
+export LOGIN_TRACKER="${HOME}/.oplogin"
 
 # Setup some input pre-processing on less.
 export LESSOPEN="|lesspipe.sh %s"
@@ -124,6 +124,18 @@ function sshagent_init(){
 
   unset AGENTFOUND
   unset AGENTSOCKET
+}
+
+function _ssh() 
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts=$(grep '^Host' ~/.ssh/config ~/.ssh/config.d/* 2>/dev/null | grep -v '[?*]' | cut -d ' ' -f 2-)
+
+    COMPREPLY=( $(compgen -W "$opts" -- ${cur}) )
+    return 0
 }
 
 # Inject new locations into the first position in $PATH
