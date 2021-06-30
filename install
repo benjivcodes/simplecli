@@ -11,6 +11,7 @@ clear
 cd "$(dirname ${BASH_SOURCE[0]})" || return 1
 DIR="$(pwd)"
 INSTALLDIR="${HOME}/.simplecli"
+<<<<<<< HEAD
 XCODETOOLSVER="$(pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | grep -i version | awk -F': ' '{print $2}')"
 
 function install_core(){
@@ -25,6 +26,14 @@ function install_core(){
 
   echo -e "Running core install cmds..."
   mkdir -p "${INSTALLDIR}/bin" "${INSTALLDIR}/lib"
+=======
+
+function install() {
+  clear
+
+  echo -e "Running core install cmds..."
+  mkdir -p "${INSTALLDIR}/bin ${INSTALLDIR}/lib"
+>>>>>>> 37c6d98f6aaae1452cf4c85ea727be08a857af93
   rsync -azh "${DIR}/bin/" "${INSTALLDIR}/bin/"
   rsync -azh "${DIR}/lib/" "${INSTALLDIR}/lib/"
   cd "${INSTALLDIR}/bin/" || return 1
@@ -38,7 +47,11 @@ function install_core(){
   set -o pipefail; pip3 install -r "${DIR}/requirements.txt" | { grep -v "already satisfied" || :; }
   deactivate
 
+<<<<<<< HEAD
   echo -e "\nInstalling BaSH configuration"
+=======
+  echo -e "\nInstalling BasSH configuration"
+>>>>>>> 37c6d98f6aaae1452cf4c85ea727be08a857af93
   if [ -e "${HOME}/.bash_profile" ] || [ -e "${HOME}/.bashrc" ]
   then
     echo -e "\tBaSH config detected, exiting..."
@@ -50,19 +63,49 @@ function install_core(){
     cp "${INSTALLDIR}/lib/bash/bash_profile" "${HOME}/.bash_profile"
   fi
 
+<<<<<<< HEAD
   echo -e "\nSimpleCLI core successfully installed"
 }
 
+=======
+  echo -e "\n\nSimpleCLI core successfully installed"
+}
+
+function link_bashy(){
+  which -a npm > /dev/null || echo -e "\n!!! npm not found, please install NPM or update your PATH"
+  cd "${INSTALLDIR}/lib/bashy" || echo -e "\n!!! bashy not available, please update SimpleCLI"
+  echo -e "\nLinking Bashy..."
+
+  if [ -e "${HOME}/.npmrc" ]
+  then
+    echo -e "\tnpmrc config detected, exiting Bashy setup..."
+    echo -e "\tManual install command:"
+    echo -e "\tcd ${INSTALLDIR}/lib/bashy && npm link > /dev/null"
+  else
+    export NPM_PACKAGES="${HOME}/.npm-packages"
+    echo "prefix=${HOME}/.npm-packages" > "${HOME}/.npmrc"
+    npm link > /dev/null
+    echo -e "BASHY successfully installed..."
+  fi
+}
+
+>>>>>>> 37c6d98f6aaae1452cf4c85ea727be08a857af93
 function install_homebrew(){
   echo -e "\nInstalling homebrew..."
   if [ -e "/usr/local/bin/brew" ]
   then
     echo -e "\tHomebrew install detected, exiting..."
+<<<<<<< HEAD
     echo -e "\tManual install command:"
     echo -e "\tbrew install \$(< ${DIR}/brew_requirements.txt)"
   else
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
     brew install $(< "${DIR}/brew_requirements.txt")
+=======
+  else
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    xargs brew install < "${INSTALLDIR}/lib//brew_bootstrap_packages" 
+>>>>>>> 37c6d98f6aaae1452cf4c85ea727be08a857af93
   fi
 }
 
@@ -77,9 +120,20 @@ if [[ ! "$(uname -s)" == "Darwin" ]]
 then
   echo -e "\nThis is macOS specific CLI; some things will work fine others won't."
   echo -e "Install will continue but you have been warned... \[._.]/"
+<<<<<<< HEAD
   echo -en "\nPress enter key to continue...\n"
   read -rs
 fi
+=======
+  echo -en "\nPress enter key to continue."
+  read -rs
+  reset
+fi
+
+install
+link_bashy
+install_homebrew
+>>>>>>> 37c6d98f6aaae1452cf4c85ea727be08a857af93
 
 free_disk
 install_core

@@ -23,7 +23,12 @@ PATH=${PATH}:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
+<<<<<<< HEAD
 export LOGIN_TRACKER="${HOME}"/.oplogin
+=======
+export CLIHOME="/usr/local/lib/simplecli"
+export LOGIN_TRACKER="${HOME}/.oplogin"
+>>>>>>> 37c6d98f6aaae1452cf4c85ea727be08a857af93
 
 # Setup some input pre-processing on less.
 export LESSOPEN="|lesspipe.sh %s"
@@ -126,6 +131,7 @@ function sshagent_init(){
   unset AGENTSOCKET
 }
 
+<<<<<<< HEAD
 # Simple ssh tab completion
 function _ssh() 
 {
@@ -140,6 +146,19 @@ function _ssh()
 
 # Enable SSH alias tab completion
 complete -F _ssh ssh
+=======
+function _ssh() 
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts=$(grep '^Host' ~/.ssh/config ~/.ssh/config.d/* 2>/dev/null | grep -v '[?*]' | cut -d ' ' -f 2-)
+
+    COMPREPLY=( $(compgen -W "$opts" -- ${cur}) )
+    return 0
+}
+>>>>>>> 37c6d98f6aaae1452cf4c85ea727be08a857af93
 
 # Inject new locations into the first position in $PATH
 function pathmunge(){

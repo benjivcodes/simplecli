@@ -4,6 +4,7 @@
 # Load the SimpleCLI and 1password-cli functions
 source "${HOME}/.simplecli/lib/bash/common"
 source "${HOME}/.simplecli/lib/bash/1passwd-cli"
+<<<<<<< HEAD
 
 # SimpleCLI, configuration variables
 export MASTERPASS="$(/usr/bin/security find-generic-password -a ${USER} -w -s 1passmaster)"
@@ -13,11 +14,20 @@ export GHTOKEN="$(/usr/bin/security find-generic-password -a ${USER} -w -s githu
 export CLIHOME="${HOME}/.simplecli"
 [ ! -e "${HOME}"/workspace ] && mkdir -p "${HOME}"/workspace
 export WORKSPACE="${HOME}"/workspace
+=======
+source "/usr/local/etc/profile.d/bash_completion.sh"
+
+# SimpleCLI, configuration variables
+export CLIHOME="${HOME}/.simplecli"
+mkdir -p "${HOME}/workspace"
+export WORKSPACE="${HOME}/workspace"
+>>>>>>> 37c6d98f6aaae1452cf4c85ea727be08a857af93
 
 # Add VS Code to the ${PATH}
 test -e "/Applications/Visual Studio Code.app/Contents/Resources/app/bin" && \
 export PATH=${PATH}:"/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 
+<<<<<<< HEAD
 ### Begin - Development support
 test -e "${HOME}/Library/Python/2.7/bin" && export PATH=${HOME}/Library/Python/2.7/bin:${PATH}
 test -e "${HOME}/Library/Python/3.8/bin" && export PATH=${HOME}/Library/Python/3.8/bin:${PATH}
@@ -42,3 +52,16 @@ function rbdevsetup(){
 
 # Load the prompt
 _prompt_command
+=======
+# Development support
+test -e "${HOME}/Library/Python/2.7/bin" && export PATH=${HOME}/Library/Python/2.7/bin:${PATH}
+test -e "${HOME}/Library/Python/3.8/bin" && export PATH=${HOME}/Library/Python/3.8/bin:${PATH}
+test -e /usr/local/opt/go/libexec && export GOROOT="/usr/local/opt/go/libexec"
+test -e /usr/local/opt/go/libexec && export GOPATH="${GOROOT}/bin/go"
+
+# Enable SSH alias tab completion
+complete -F _ssh scp sftp ssh
+
+# Load the prompt
+_prompt_command
+>>>>>>> 37c6d98f6aaae1452cf4c85ea727be08a857af93
