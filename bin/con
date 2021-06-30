@@ -11,18 +11,16 @@
 # VPN_DEFAULT_GW == the default gateway/route that should be present when connected
 
 function con_help(){
-  echo ""
-  echo " Connect to a variety of hosts by location/type. Please read DISCLAIMER"
-  echo " contained within the cli/bin/con file for additional details on usage."
-  echo ""
+  echo " "
+  echo " Connect to a variety of hosts by location/type."
+  echo " Please read DISCLAIMER contained within this file for additional details on usage."
+  echo " "
   echo " -p connect to production host; takes one argument, requires vpn conection"
-  echo " -t connect to production host using Thycotic creds; takes one argument, requires vpn connection"
   echo " -d connect to development host; takes one argument"
-  echo " -l connect to local host (on same network, or does not require a bastion); takes one argument"
+  echo " -l connect to local host on same network, or that does not require a bastion; takes one argument"
   echo " -b connect to bastion host; takes one argument, may require vpn connection"
-  echo " -h display this help"
-  echo ""
-  return 1
+  echo " -h returns this message"
+  echo " "
 }
 
 # Check for a valid bastion.
@@ -30,25 +28,23 @@ function bastcheck(){
   if [[ -z "${BASTION_DEV}" || -z "${BASTION_PROD}" ]]
   then
     echo -e "\nExpected BASTION_DEV and BASTION_PROD environment to be set, exiting!"
+    exit 1
   fi
-
-  return 1
 }
 
 # Support for vpns via BigIP client.
 function vpncheck(){
-  if [[ -z "${VPN_DEFAULT_GW}" ]]
+  if [ -z "${VPN_DEFAULT_GW}" ]
   then
     echo -e "\nExpected VPN_DEFAULT_GW to be set, exiting!"
+    exit 1
   fi
 
-  
-  if [[ "$(netstat -nr -f inet | grep -i ^default | grep -i -q ${VPN_DEFAULT_GW})" -gt 0 ]]
+  if [[ $(command netstat -nr -f inet | grep -i ^default | grep -i -q "${VPN_DEFAULT_GW}") -gt 0 ]]
   then
     echo -e "\nDoesn't look like you're connected to correct VPN!\n"
+    exit 1
   fi
-
-  return 1
 }
 
 
@@ -58,13 +54,6 @@ case "$1" in
     bastcheck
     shift;
     /usr/bin/ssh -4 -t ${BASTION_PROD} -t /usr/bin/ssh -4 $1
-    exit 0
-  ;;
-
-  -t)
-    vpncheck
-    shift;
-    thyssh $1
     exit 0
   ;;
 
@@ -94,11 +83,6 @@ case "$1" in
     fi
     exit 0
     ;;
-
-  -h)
-    con_help
-    exit 0
-  ;;
 
   *)
     con_help

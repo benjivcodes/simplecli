@@ -1,0 +1,12 @@
+#!/usr/bin/expect
+
+set timeout 20
+log_user 0
+spawn op signin --raw my
+expect -re "Enter the password*" { send "$env(MASTERPASS)\r" }
+expect {
+  -re "\n(.*)\r\n" {set result $expect_out(1,string)}
+}
+expect *
+log_user 1
+puts $result

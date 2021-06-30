@@ -1,7 +1,5 @@
-android-platform-tools
-android-sdk
 bash
-bash-completion
+bash-completion2
 boost
 coreutils
 findutils

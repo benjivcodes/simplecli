@@ -6,13 +6,18 @@ function ip_description(){
 }
 
 function ip_help(){
-  echo -e "\n usage: $(basename "$0") ip <subcommand>"
-  echo -e "\n AVAILABLE SUBCOMMANDS:\n"
+  echo " "
+  echo " Get and/or validate IPv4 addresses."
+  echo " "
+  echo " USAGE: $(basename "$0") ip <subcommand>"
+  echo " "
+  echo " AVAILABLE SUBCOMMANDS:"
+  echo " "
   echo " remote       get the visible external IPv4 Address"
   echo " local        get the local device and IPv4 Address"
   echo " validate     confirm a string 'looks' like an IPv4 Address"
-  echo " help         this message"
-  echo ""
+  echo " help         returns this message"
+  echo " "
 }
 
 function ip_handle(){
@@ -44,10 +49,6 @@ function ip_handle(){
       else
         echo -e "\n${ip}: appears to be a valid dotted quad.\n"
       fi
-    ;;
-
-    help)
-      ip_help
     ;;
 
     *)

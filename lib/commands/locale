@@ -6,15 +6,20 @@ function locale_description(){
 }
 
 function locale_help(){
-  echo -e "\n usage: $(basename "$0") locale <subcommand>\n"
-  echo -e "\n AVAILABLE SUBCOMMANDS:\n"
+  echo " "
+  echo " Set/Get the macOS network locale"
+  echo " "
+  echo " USAGE: $(basename "$0") locale <subcommand>"
+  echo " "
+  echo " AVAILABLE SUBCOMMANDS:"
+  echo " "
   echo " set [locale]   set the macOS network location"
   echo " get            get the macOS network location"
   echo " noarp          disable unicast arp"
   echo " noipv6         disable IPV6 support"
   echo " sethostname    set the system hostname"
   echo " noguest        disable Guest login"
-  echo " help           help"
+  echo " help           returns this message"
   echo ""
 }
 
@@ -53,7 +58,7 @@ function locale_handle(){
     ;;
 
     sethostname)
-      shift
+      shift;
       sudo scutil --set LocalHostName "$1"
       sudo scutil --set ComputerName "$1"
       sudo scutil --set HostName "$1"
@@ -66,10 +71,6 @@ function locale_handle(){
       sudo defaults write "/Library/Preferences/SystemConfiguration/com.apple.smb.server" AllowGuestAccess -bool NO
     ;;
   
-    help)
-      locale_help
-    ;;
-
     *)
       locale_help
     ;;

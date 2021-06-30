@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-command -v lynx > /dev/null || echo -e "\nLynx not found, please install lynx via brew/apt!"
+command -v lynx > /dev/null || exit 1
 
-secure_headers="/usr/local/lib/simplecli/secure_headers"
+secure_headers="${CLIHOME}/lib/secure_headers"
 secure_headers_cnt="$(wc -l < ${secure_headers})"
 raw_headers="$(mktemp)"
 raw_grade="$(mktemp)"
 
-lynx --dump "https://securityheaders.com/?q=$@&followRedirects=on" > "${raw_grade}"
-curl -sIL -X GET -A "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/81.0" https://"$@" > "${raw_headers}"
+lynx --dump "https://securityheaders.com/?q=$1&followRedirects=on" > "${raw_grade}"
+curl -sIL -X GET -A "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/81.0" https://"$1" > "${raw_headers}"
 
 secure_headers_found_cnt="$(grep -E -i -f ${secure_headers} ${raw_headers} | sort -uf | wc -l)"
 secure_headers_found="$(grep -E -i -f ${secure_headers} ${raw_headers} | sort -uf )"
@@ -17,5 +17,4 @@ secure_headers_percent=$(awk "BEGIN {x=${secure_headers_found_cnt}; y=${secure_h
 echo -e "\nSome headers may be found before an HTTP/1.1 301 or after and may impact some detection results."
 echo -e "\nFound the following headers:\n\n${secure_headers_found}"
 echo -e "\nThis is ${secure_headers_percent}% of total headers required."
-echo -e "\nFull explantion from https://securityheaders.com/?q=$@&followRedirects=on,\ncan be found in ${raw_grade}\n\n"
-
+echo -e "\nFull explantion from https://securityheaders.com/?q=$1&followRedirects=on,\ncan be found in ${raw_grade}\n\n"

@@ -1,61 +1,87 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090
+# shellcheck disable=SC1090
+# shellcheck disable=SC2046
+# shellcheck disable=SC2086
+# shellcheck disable=SC2071
+
 # Install the SimpleCLI tool
 
-cd $(dirname "${BASH_SOURCE[0]}") || return 1
+clear
+cd "$(dirname ${BASH_SOURCE[0]})" || return 1
 DIR="$(pwd)"
-INSTALLDIR="/usr/local"
+INSTALLDIR="${HOME}/.simplecli"
+XCODETOOLSVER="$(pkgutil --pkg-info=com.apple.pkg.CLTools_Executables | grep -i version | awk -F': ' '{print $2}')"
 
-function install() {
-  mkdir -p "${INSTALLDIR}/bin"
-
-  rm -fr "${INSTALLDIR}/lib/simplecli"
-  mkdir -p "${INSTALLDIR}/lib/simplecli"
-
-  rsync -azh "${DIR}/bin/" "${INSTALLDIR}/bin/"
-  rsync -azh "${DIR}/lib/" "${INSTALLDIR}/lib/simplecli/"
-
-  cd /usr/local/bin || return 1
-  chmod +x appify  cli  con  *headerchk  mbox2imap  slacktee  ssllabs-scan-v3 thycotic_sshproxy
-
-  sudo -H pip3 --quiet install pexpect requests certifi
-
-  if [[ -d "${DIR}/.git" ]]
+function install_core(){
+  if [ ! "${XCODETOOLSVER}" > "0" ]
   then
-    rsync -azh "${DIR}/.git" "${INSTALLDIR}/lib/simplecli/"
+    echo -e "\nWaiting for Xcode Command Line Tools install..."
+    xcode-select --install
+    read -n 1 -s -r -p "Press any key to continue"
+  else
+    echo -e "\nXcode Command Line Tools version ${XCODETOOLSVER} found..."
   fi
 
-  echo "SimpleCLI successfully installed"
+  echo -e "Running core install cmds..."
+  mkdir -p "${INSTALLDIR}/bin" "${INSTALLDIR}/lib"
+  rsync -azh "${DIR}/bin/" "${INSTALLDIR}/bin/"
+  rsync -azh "${DIR}/lib/" "${INSTALLDIR}/lib/"
+  cd "${INSTALLDIR}/bin/" || return 1
+  chmod +x ./*
+
+  echo -e "Running pip3 installs..."
+  cd "${HOME}" || exit 1
+  python3 -m venv "${USER}-env"
+  "${HOME}/bva-env/bin/python3" -m pip install --upgrade pip | { grep -v "already satisfied" || :; }
+  source "${HOME}/${USER}-env/bin/activate"
+  set -o pipefail; pip3 install -r "${DIR}/requirements.txt" | { grep -v "already satisfied" || :; }
+  deactivate
+
+  echo -e "\nInstalling BaSH configuration"
+  if [ -e "${HOME}/.bash_profile" ] || [ -e "${HOME}/.bashrc" ]
+  then
+    echo -e "\tBaSH config detected, exiting..."
+    echo -e "\tManaul install commmand:"
+    echo -e "\tAdd the following to your .bash_profile or .bashrc"
+    echo -e "\tsource ${INSTALLDIR}/lib/bash/common"
+    echo -e "\tsource ${INSTALLDIR}/lib/bash/1passwd-cli"
+  else
+    cp "${INSTALLDIR}/lib/bash/bash_profile" "${HOME}/.bash_profile"
+  fi
+
+  echo -e "\nSimpleCLI core successfully installed"
 }
 
-function link_bashy(){
-  which -a npm > /dev/null || echo -e "\n!!! npm not found, please install NPM or update your PATH"
-  cd /usr/local/lib/simplecli/bashy || echo -e "\n!!! bashy not available, please update SimpleCLI"
-
-  npm link > /dev/null
-  echo -e "BASHY successfully installed"
+function install_homebrew(){
+  echo -e "\nInstalling homebrew..."
+  if [ -e "/usr/local/bin/brew" ]
+  then
+    echo -e "\tHomebrew install detected, exiting..."
+    echo -e "\tManual install command:"
+    echo -e "\tbrew install \$(< ${DIR}/brew_requirements.txt)"
+  else
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    brew install $(< "${DIR}/brew_requirements.txt")
+  fi
 }
 
-reset
-echo ""
+function free_disk(){
+  echo -e "\nSimpleCLI core will require ~15M of disk space. You have $(df -h / | tail -1 | awk '{print $4}') on / ..."
+  echo -e "If Homebrew and brew_requirements are installed as part of this script it will require another ~6G of space..."
+  echo -en "\nPress enter key to continue...\n"
+  read -rs
+}
 
 if [[ ! "$(uname -s)" == "Darwin" ]]
 then
   echo -e "\nThis is macOS specific CLI; some things will work fine others won't."
   echo -e "Install will continue but you have been warned... \[._.]/"
-  echo -en "\nPress enter key to continue."
-  read
-  reset
+  echo -en "\nPress enter key to continue...\n"
+  read -rs
 fi
-install
-link_bashy
 
-echo -e "\n!!! Please add the following to your .bash_profile, or equivalent to use SimpleCLI:"
-echo 'source "/usr/local/lib/simplecli/bash/common"'
-
-echo -e "\n!!! If you would like to use included 1password cli functions then add the following as well:"
-echo 'source "/usr/local/lib/simplecli/bash/1passwd-cli"'
-
-echo -e "\nA very basic Homebrew bootstrap is available via: 'cli brew bootstrap'"
-source "${HOME}/.bash_profile"
-echo ""
-
+free_disk
+install_core
+install_homebrew
+echo -e "\n"

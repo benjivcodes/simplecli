@@ -2,28 +2,36 @@
 # Simple MacOS cleanup toolchain
 
 function clean_description(){
-    echo "cleanup macOS system cruft"
+    echo "Cleanup macOS system cruft"
 }
 
 function clean_help(){
-  echo -e "\n usage: $(basename "$0") clean <subcommand>"
-  echo -e "\n AVAILABLE SUBCOMMANDS:\n"
+  echo " "
+  echo " Cleanup macOS system cruft"
+  echo " "
+  echo " USAGE: $(basename "$0") clean <subcommand>"
+  echo " "
+  echo " AVAILABLE SUBCOMMANDS:"
+  echo " "
   echo " all         full macOS clean; here be dragons"
   echo " core        perform core macOS cleanup/maintenance"
   echo " dns         remove DNS cache, if possible"
   echo " mem         purge unused pages and return them to free pool"
   echo " xauth       reset the Xauth control file"
   echo " spotlight   rebuild Spotlight indexes on all volumes"
-  echo " help        this message"
-  echo ""
+  echo " help        returns this message"
+  echo "" 
 }
 
 function clean_macos(){
+  # Free up unused but inactive memory
+  echo "!! Warnging: this may remove memory marked inactive that is actually in use by some application."
+  read -r -s -n 1 -p "!! This may cause some applications to fail. Press Ctrl-C to exit or any key to continue..."
+  echo " "
+  sudo purge
+
   echo "!! Warning: this may remove log data or other application/debug data."
   read -r -s -n 1 -p "!! If you think you may need this press Ctrl-C to exit or any key to continue..."
-
-  # Free up unused but inactive memory
-  sudo purge
 
   # Rebuild XPC cache
   sudo /usr/libexec/xpchelper --rebuild-cache > /dev/null 2>&1
@@ -94,6 +102,8 @@ function clean_xauth(){
 function clean_mem(){
   echo "!! Warnging: this may remove memory marked inactive that is actually in use by some application."
   read -r -s -n 1 -p "!! This may cause some applications to fail. Press Ctrl-C to exit or any key to continue..."
+  echo " "
+  sudo purge
 }
 
 function clean_spotlight(){

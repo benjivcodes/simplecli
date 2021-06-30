@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC1091
+
+# Load the SimpleCLI and 1password-cli functions
+source "${HOME}/.simplecli/lib/bash/common"
+source "${HOME}/.simplecli/lib/bash/1passwd-cli"
+
+# SimpleCLI, configuration variables
+export MASTERPASS="$(/usr/bin/security find-generic-password -a ${USER} -w -s 1passmaster)"
+export ENCRYPTION_PWD="$(/usr/bin/security find-generic-password -a ${USER} -w -s dmg_encryption-key)"
+export GHUSER="$(/usr/bin/security find-generic-password -a ${USER} -w -s github-user)"
+export GHTOKEN="$(/usr/bin/security find-generic-password -a ${USER} -w -s github-token)"
+export CLIHOME="${HOME}/.simplecli"
+[ ! -e "${HOME}"/workspace ] && mkdir -p "${HOME}"/workspace
+export WORKSPACE="${HOME}"/workspace
+
+# Add VS Code to the ${PATH}
+test -e "/Applications/Visual Studio Code.app/Contents/Resources/app/bin" && \
+export PATH=${PATH}:"/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+
+### Begin - Development support
+test -e "${HOME}/Library/Python/2.7/bin" && export PATH=${HOME}/Library/Python/2.7/bin:${PATH}
+test -e "${HOME}/Library/Python/3.8/bin" && export PATH=${HOME}/Library/Python/3.8/bin:${PATH}
+export SDKROOT="$(xcrun --show-sdk-path)"
+export PATH="${PATH}:${HOME}/.local/share/gem/ruby/3.0.0/bin"
+
+function pydevsetup(){
+  cd "${HOME}" || exit 1
+  [ ! -e "${USER}-env" ] && python3 -m venv "${USER}-env"
+  source "${HOME}/${USER}-env/bin/activate"
+   echo -e "Running pip3 installs..."
+  "${HOME}/bva-env/bin/python3" -m pip install --upgrade pip | { grep -v "already satisfied" || :; }
+  set -o pipefail; pip3 install -r "${CLIHOME}/lib/py_requirements.txt" | { grep -v "already satisfied" || :; }
+}
+
+function rbdevsetup(){
+  eval "$(rbenv init -)"
+  curl -fsSL https://github.com/rbenv/rbenv-installer/raw/main/bin/rbenv-doctor | /usr/local/bin/bash
+  gem install --user-install bundler jekyll
+}
+### End - Development Support
+
+# Load the prompt
+_prompt_command

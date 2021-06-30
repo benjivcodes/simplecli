@@ -2,8 +2,12 @@
 # Clone and checkout master branch of MHA, then launch the webapp for use.
 # MHA https://github.com/lnxg33k/email-header-analyzer
 
-# Let's keep the current working directory safe
-pushd . > /dev/null || exit 1
+# Are we in a safe place?
+if [ -z "${VIRTUAL_ENV}" ]
+then
+  echo -e "\nNot inside a Python VENV, exiting..."
+  exit 1
+fi
 
 # Fetch Mail Header Analyzer (MHA)
 cd /tmp || exit 1
@@ -21,5 +25,6 @@ else
 fi
 
 # Launch MHA flask server then Return us to the working directory on exit
+
 cd /tmp/mailheaderanalyzer/mha || exit 1
 python server.py -d && popd > /dev/null || exit 1

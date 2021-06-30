@@ -2,14 +2,15 @@
 # A simple command line based extensible toolchain for MacOS.
 
 bash_source="${BASH_SOURCE[0]}"
-if [[ -h $bash_source ]]; then
+if [[ -h $bash_source ]]
+then
   bash_source="$(readlink "$bash_source")"
 fi
 
 bold=$(tput bold)
 normal=$(tput sgr0)
-cli_lib="/usr/local/lib/simplecli"
-command_dir="${cli_lib}/commands"
+cli_lib="${CLIHOME}/lib"
+command_dir="${CLIHOME}/lib/commands"
 available_commands=()
 
 function source_commands(){
@@ -38,25 +39,30 @@ function handle_command(){
 }
 
 function usage(){
-  echo -e " "
-  echo -e "  usage: $(basename "$0") <command> <subcommand> [parameters]\n"
-  echo -e "  To see help text, you can run:\n"
-  echo -e "  cli help"
-  echo -e "  cli <command> help"
-  echo -e "  cli <subcommand> help"
-  echo -e " "
+  echo " "
+  echo " A simple command line based extensible toolchain for MacOS."
+  echo " "
+  echo "  USAGE: $(basename "$0") <command> <subcommand> [parameters]"
+  echo " "
+  echo "  To see help text, you can run:"
+  echo "  cli help"
+  echo "  cli <command> help"
+  echo "  cli <subcommand> help"
+  echo " "
 }
 
 function help(){
-  echo -e  "\n A simple command line based extensible toolchain for MacOS."
-  echo -e "\n AVAILABLE COMMANDS$\n"
-
+  echo " "
+  echo " A simple command line based extensible toolchain for MacOS."
+  echo " "
+  echo " AVAILABLE COMMANDS:"
+  echo " "
   source_commands
   for command in "${available_commands[@]}"
   do
-    echo -e "  ${command} :::: $(${command}_description)"
+    echo " ${command} :::: $(${command}_description)"
   done
-   echo ""
+   echo " "
 }
 
 command="$1"
@@ -65,10 +71,6 @@ case $command in
     help
   ;;
 
-  -h)
-    help
-  ;;
-  
   *)
     handle_command "$@"
   ;;

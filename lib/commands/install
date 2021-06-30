@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Wrapper for Homebrew on MacOS
+
+function install_description(){
+    echo "Install application using Homewbrew"
+}
+
+function install_help(){
+  echo " "
+  echo "Install application using Homewbrew"
+  echo " "
+  echo " USAGE: $(basename "$0") <application/homebrew-package>"
+  echo " "
+  echo " AVAILABLE SUBCOMMANDS:"
+  echo " "
+  echo " help      returns this message"
+	echo " "
+}
+
+function install_handle(){
+  command="$1"
+
+  case $command in
+    help)
+      install_help
+    ;;
+
+    *)
+      brew update --quiet
+      brew install -q "$1"
+    ;;
+  esac
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function sshagent_findsockets(){
-  find /tmp -uid $(id -u) -type s -name agent.\* 2>/dev/null
+  find /tmp -uid "$(id -u)" -type s -name agent.\* 2>/dev/null
 }
 
 function sshagent_testsocket(){
@@ -18,10 +18,10 @@ function sshagent_testsocket(){
     return 2
   fi
 
-  if [ -S ${SSH_AUTH_SOCK} ]; then
+  if [ -S "${SSH_AUTH_SOCK}" ]; then
     ssh-add -l > /dev/null
     if [ $? = 2 ] ; then
-      rm -f ${SSH_AUTH_SOCK}
+      rm -f "${SSH_AUTH_SOCK}"
       return 4
     else
       return 0
@@ -43,16 +43,16 @@ function sshagent_init(){
   # If there is no agent in the environment, search /tmp for
   # possible agents to reuse before starting a fresh ssh-agent
   # process.
-  if [ ${AGENTFOUND} = 0 ]; then
+  if [ "${AGENTFOUND}" = 0 ]; then
     for AGENTSOCKET in $(sshagent_findsockets) ; do
-      if [ ${AGENTFOUND} != 0 ] ; then break ; fi
-      if sshagent_testsocket $AGENTSOCKET ; then AGENTFOUND=1 ; fi
+      if [ "${AGENTFOUND}" != 0 ] ; then break ; fi
+      if sshagent_testsocket "${AGENTSOCKET}" ; then AGENTFOUND=1 ; fi
     done
   fi
 
   # If at this point we still haven't located an agent, it's time to
   # start a new one
-  if [ ${AGENTFOUND} = 0 ]; then
+  if [ "${AGENTFOUND}" = 0 ]; then
     eval $(ssh-agent)
   fi
 

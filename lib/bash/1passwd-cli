@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # 1password-cli functions
 
+# If available, source the 1password-cli login tracker
+[ -e "${LOGIN_TRACKER}" ] && source "${LOGIN_TRACKER}"
+
 function opon(){
-  source "${LOGIN_TRACKER}"
   if [ $(( ${OP_SESSION_LIFETIME} - $(date +%s) )) -lt 30 ]
   then
-    eval $(op signin my)
+    export OP_SESSION_my="$(1passwd-cli-expect)"
     export OP_SESSION_LIFETIME="$(date +%s -d '+30 minutes')"
     {
       echo -e "export OP_SESSION_my=${OP_SESSION_my}"
@@ -20,7 +22,6 @@ function opoff(){
   unset OP_SESSION_my
   unset OP_SESSION_LIFETIME
   rm -f "${LOGIN_TRACKER}"
-  touch "${LOGIN_TRACKER}"
 }
 
 function listkeys(){

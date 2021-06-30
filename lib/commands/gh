@@ -6,22 +6,21 @@ function gh_description(){
 }
 
 function gh_help(){
-  echo -e "\n usage: $(basename "$0") gh <subcommand>"
-  echo -e "\n AVAILABLE SUBCOMMANDS:\n"
+  echo " "
+  echo " GitHub API helpers."
+  echo " "
+  echo " USAGE: $(basename "$0") gh <subcommand>"
+  echo " AVAILABLE SUBCOMMANDS:"
+  echo " "
   echo " push-keys        push ssh-keys from 1password-cli"
   echo " list-keys        list current ssh-keys for user in format <keyid> <title>"
   echo " del-key          delete ssh-key by key id; use list-keys to get key id"
-  echo " help             this message"
-  echo ""
+  echo " help             returns this message"
+  echo " "
 }
 
 function gh_handle(){
-  # This function expects go find your Github credentials stored in 1password under an item
-  # titled Github; if it can't be found it fail.
-  local MERGED_BRANCHES="/tmp/cli-git-mb.txt"
   local OUTPUT=$(mktemp)
-  local GHUSER=$(getuser github)
-  local GHTOKEN=$(gettoken github)
 
   if [[ -z "$GH_URL" ]]
   then
@@ -53,10 +52,6 @@ function gh_handle(){
       -X DELETE \
       -H "Accept: application/vnd.github.v3+json" \
       ${GH_URL}/user/keys/$1
-    ;;
-
-    help)
-      gh_help
     ;;
 
     *)

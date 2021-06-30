@@ -6,15 +6,17 @@ function brew_description(){
 }
 
 function brew_help(){
-  echo -e "\n usage: $(basename "$0") homebrew <subcommand>"
-  echo -e "\n AVAILABLE SUBCOMMANDS:\n"
+  echo " "
+  echo " Homebrew toolchain for macOS"
+  echo " USAGE: $(basename "$0") brew <subcommand>"
+  echo " "
+  echo " AVAILABLE SUBCOMMANDS:"
+  echo " "
   echo " bootstrap   install Homebrew with a base set of options and tools"
-  echo " fix         attempt to fix anything that has gone wrong"
   echo " remove      remove Homebrew from the system"
-  echo " meaint      perform Homebrew maintenance"
-  echo " multi       attempt to make Homebrew multiuser"
-  echo " help        this message"
-	echo ""
+  echo " maint       perform Homebrew maintenance"
+  echo " help        returns this message"
+	echo " "
 }
 
 function brew_handle(){
@@ -23,7 +25,7 @@ function brew_handle(){
   case $command in
     bootstrap)
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-      xargs brew install < "${CLIHOME}/brew_bootstrap_packages"
+      xargs brew install < "${CLIHOME}/lib/brew_requirements.txt"
     ;;
 
     remove)
@@ -31,22 +33,12 @@ function brew_handle(){
     ;;
 
     maint)
-      command -v brew || exit 1
+      command -v brew > /dev/null 2>&1 || exit 1
       brew update --quiet
-      brew upgrade --quiet
-      brew doctor
-      brew missing
-      brew cleanup -s
-    ;;
-
-    multi)
-      echo -e "\nYou will need to add users to the group 'admin'."
-      sudo chgrp -R admin $(brew --prefix) $(brew --prefix)/Cellar
-      sudo chmod -R g+rwX $(brew --prefix) $(brew --prefix)/Cellar
-    ;;
-
-    help)
-      brew_help
+      brew upgrade -q
+      brew doctor -q 
+      brew missing -q
+      brew cleanup -q -s
     ;;
 
     *)

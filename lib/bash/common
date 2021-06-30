@@ -18,28 +18,26 @@ PATH=/usr/local/opt/gnu-sed/libexec/gnubin:${PATH}
 PATH=/usr/local/opt/ruby/bin:${PATH}
 PATH=/home/linuxbrew/.linuxbrew/bin:${PATH}
 PATH=/home/linuxbrew/.linuxbrew/sbin:${PATH}
+PATH=${HOME}/.simplecli/bin:${PATH}
 PATH=${PATH}:/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
-export CLIHOME="/usr/local/lib/simplecli"
-export LOGIN_TRACKER="${HOME}/.login"
+export LOGIN_TRACKER="${HOME}"/.oplogin
 
 # Setup some input pre-processing on less.
 export LESSOPEN="|lesspipe.sh %s"
 
-# Let Homeebrew use GCC
+# Let Homeebrew use variables
 export HOMEBREW_USE_GCC=1
-
-# Disable Homebrew Analytics
 export HOMEBREW_NO_ANALYTICS=1
 
 # Set the default editor.
-EDITOR="/usr/bin/vim"
-export EDITOR VISUAL="${EDITOR}" SVN_EDITOR="${EDITOR}"
+export EDITOR="/usr/bin/vim"
+export VISUAL="${EDITOR}" SVN_EDITOR="${EDITOR}"
 
 # Set some behavior reguarding history.
-export HISTFILE="${HOME}/.bash_history"
+export HISTFILE="${HOME}"/.bash_history
 export HISTSIZE=100000
 export HISTCONTROL=ignoreboth
 export HISTTIMEFORMAT="%F %T "
@@ -49,31 +47,33 @@ if [[ "${SHELL}" = "/usr/local/bin/bash" ]]
 then
   shopt -s histappend
   shopt -s checkwinsize
-  [ -e "/usr/local/etc/bash_completion" ] && source "/usr/local/etc/bash_completion"
-  [ -e "/usr/local/etc/bash_completion" ] && complete -cf sudo
-  [ -e "${HOME}/.iterm2_shell_integration.bash" ] && source "${HOME}/.iterm2_shell_integration.bash"
+  [ -e "/usr/local/etc/profile.d/bash_completion.sh" ] && source "/usr/local/etc/profile.d/bash_completion.sh"
 fi
 
 # Set some basic colors
 export LSCOLORS=gxfxcxdxbxegedabagacad
 
-# Simple file sort
-function sf(){
-  sort -u -o $1 $1
+# Add password to MacOS keychain
+function addkeypass(){
+  /usr/bin/security add-generic-password -a ${USER} -s "$1" -w
 }
 
-# Smarter ssh-agent handling
+# Get password from MacOS keychain
+function getkeypass(){
+  /usr/bin/security find-generic-password -a ${USER} -w -s "$1"
+}
+
+# Simple file sort
+function sf(){
+  sort -u -o "$1" "$1"
+}
+
+# Smarter-ish ssh-agent handling
 function sshagent_findsockets(){
   find /tmp -uid $(id -u) -type s -name agent.\* 2>/dev/null
 }
 
 function sshagent_testsocket(){
-  if [[ ! -x "$(which ssh-add)" ]]
-  then
-    echo "ssh-add is not available; agent testing aborted"
-    return 1
-  fi
-
   if [[ X"$1" != X ]]
   then
     export SSH_AUTH_SOCK=$1
@@ -81,7 +81,7 @@ function sshagent_testsocket(){
 
   if [[ X"${SSH_AUTH_SOCK}" = X ]]
   then
-    return 2
+    exit 2
   fi
 
   if [[ -S ${SSH_AUTH_SOCK} ]]
@@ -125,6 +125,21 @@ function sshagent_init(){
   unset AGENTFOUND
   unset AGENTSOCKET
 }
+
+# Simple ssh tab completion
+function _ssh() 
+{
+  local cur prev opts
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+  opts=$(grep '^Host' ~/.ssh/config ~/.ssh/config.d/* 2>/dev/null | grep -v '[?*]' | cut -d ' ' -f 2-)
+  COMPREPLY=( "$(compgen -W $opts -- ${cur})" )
+  return 0
+}
+
+# Enable SSH alias tab completion
+complete -F _ssh ssh
 
 # Inject new locations into the first position in $PATH
 function pathmunge(){
@@ -170,55 +185,6 @@ function rspaces(){
   done
 }
 
-# Create a password encryped DMG from a folder on MacOS
-function dmgcrypt(){
-  local vol src
-
-  if [[ -z "$1" ]]
-  then
-    echo -e "Volume name:"
-    read -r vol
-  else
-    vol="$1"
-  fi
-
-  if [[ -z "$2" ]]
-  then
-    echo -e "\nSource folder:"
-    read -r src
-  else
-    src="$2"
-  fi
-
-  echo -e "\n"
-  hdiutil create "${vol}".dmg -ov -volname "${vol}" \
-    -fs HFS+ -encryption AES-256 -stdinpass -srcfolder "${src}"
-}
-
-# Create an unencryped DMG from a folder on MacOS
-function dmg(){
-  local vol src
-
-  if [[ -z "$1" ]]
-  then
-    echo -e "Volume name:"
-    read -r vol
-  else
-    vol="$1"
-  fi
-
-  if [[ -z "$2" ]]
-  then
-    echo -e "\nSource folder:"
-    read -r src
-  else
-    src="$2"
-  fi
-
-  echo -e "\n"
-  hdiutil create "${vol}".dmg -ov -volname "${vol}" -fs HFS+ -srcfolder "${src}"
-}
-
 # Read from file so that you can iterate over each line
 function readfrom(){
   while read -r line
@@ -229,16 +195,16 @@ function readfrom(){
 
 # Attempt to download Youtube video and make mp3 file from the audio
 function yt2mp3(){
-  [ ! -e /usr/local/bin/youtube-dl ] && brew install youtube-dl
-  [ ! -e /usr/local/bin/ffmpeg ] && brew install ffmpeg
+  [ ! -e /usr/local/bin/youtube-dl ] && cli install youtube-dl
+  [ ! -e /usr/local/bin/ffmpeg ] && cli install ffmpeg
   if [[ -z "$1" ]]
   then
     echo -e "\n!!! Youtube Link Please..."
     read -r ytlink
-    youtube-dl "${ytlink}" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
+    youtube-dl "${ytlink}" -q -x --audio-format mp3 -o "${HOME}/Downloads/%(title)s.%(ext)s"
   else
     ytlink="$1"
-    youtube-dl "${ytlink}" -q -x --audio-format mp3 -o "/tmp/%(title)s.%(ext)s"
+    youtube-dl "${ytlink}" -q -x --audio-format mp3 -o "${HOME}/Downloads/%(title)s.%(ext)s"
   fi
 }
 
@@ -247,27 +213,23 @@ function sshpem2pub(){
   ssh-keygen -y -f "$1"
 }
 
-# Simple color test
-function colortest(){
-  echo -e "\033[0mCOLOR_NC (No color)"
-  echo -e "\033[1;37mCOLOR_WHITE\t\033[0;30mCOLOR_BLACK"
-  echo -e "\033[0;34mCOLOR_BLUE\t\033[1;34mCOLOR_LIGHT_BLUE"
-  echo -e "\033[0;32mCOLOR_GREEN\t\033[1;32mCOLOR_LIGHT_GREEN"
-  echo -e "\033[0;36mCOLOR_CYAN\t\033[1;36mCOLOR_LIGHT_CYAN"
-  echo -e "\033[0;31mCOLOR_RED\t\033[1;31mCOLOR_LIGHT_RED"
-  echo -e "\033[0;35mCOLOR_PURPLE\t\033[1;35mCOLOR_LIGHT_PURPLE"
-  echo -e "\033[0;33mCOLOR_YELLOW\t\033[1;33mCOLOR_LIGHT_YELLOW"
-  echo -e "\033[1;30mCOLOR_GRAY\t\033[0;37mCOLOR_LIGHT_GRAY"
-}
-
 # Single use invocation of ClamScan
 function scanthis(){
-  
-  [ ! -e "/usr/local/bin/freshclam" ] && brew install clamav > /dev/null 2>&1
-  echo -e "\n Updating virus definitions..."
+  if [ ! -e "/usr/local/bin/freshclam" ]
+  then
+    echo -e "\nInstallig clamav ..."
+    cli install clamav > /dev/null 2>&1
+    mkdir -p "/usr/local/var/run/clamav"
+    cp "/usr/local/etc/clamav/clamd.conf.sample" "/usr/local/etc/clamav/clamd.conf"
+    echo "DatabaseMirror database.clamav.net" > "/usr/local/etc/clamav/freshclam.conf"
+  fi
+
+  echo -e " Updating virus definitions ..."
   /usr/local/bin/freshclam --quiet
-  echo -e "\n Begining scan of target: $1"
+  
+  echo -e " Begining scan of target: $1 ..."
   clamscan --infected --recursive=yes --scan-mail=yes --max-filesize=2000M "$1"
+  echo " "
 }
 
 # Remove the hidden file attribute
@@ -290,38 +252,47 @@ function whereami(){
   DIR="$(cd -P "$(dirname "${SOURCE}")" && pwd)"
 }
 
-function _git_prompt(){
-  local git_status="$(git status -unormal 2>&1)"
-  if ! [[ ${git_status} =~ Not\ a\ git\ repo ]]
-  then
-   if [[ ${git_status} =~ nothing\ to\ commit ]]
-   then
-      local ansi=$IGreen
-    elif [[ ${git_status} =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]
-    then
-      local ansi=$IYellow
-    else
-      local ansi=$IRed
-    fi
-    if [[ ${git_status} =~ On\ branch\ ([^[:space:]]+) ]]
-    then
-      branch=${BASH_REMATCH[1]}
-      test "$branch" != master || branch='master'
-    else
-      # Detached HEAD.  (branch=HEAD is a faster alternative.)
-      branch="$(git describe --all --contains --abbrev=4 HEAD 2> /dev/null || echo HEAD)"
-    fi
-    echo -n "\[$ansi\]""(""$branch"")""\[$Color_Off\]"
-  fi
-}
-
-function _prompt_command(){
-  PS1="\[$IRed\][\h]\[$IRed\][\[$Blue\]\u\[$IPurple\]::\W\[$IRed\]]\[$IGreen\]\$ \[$Color_Off\]"
-}
-
 # How long is the cert valid?
 function cert-valid-until(){
-  /usr/local/opt/openssl/bin/openssl x509 -dates -noout -in $1
+  /usr/local/opt/openssl/bin/openssl x509 -dates -noout -in "$1"
+}
+
+# Some useful git functions
+function newbranch(){
+  git checkout --quiet master
+  git pull --quiet
+  git checkout -b "$1"
+}
+
+function pushbranch(){
+  git push --set-upstream origin "$(git rev-parse --abbrev-ref HEAD)"
+}
+
+function deletemerged(){
+  local MERGED_BRANCHES="/tmp/cli-git-mb.txt"
+  git checkout --quiet master
+  git pull --quiet
+  git branch --merged | grep -vi master > "${MERGED_BRANCHES}"
+  xargs git branch -d < "${MERGED_BRANCHES}"
+  rm -f "${MERGED_BRANCHES}"
+}
+
+function prunebranches(){
+  git branch -vv | grep 'origin/.*: gone]' | awk '{print $1}' | xargs git branch -D
+}
+
+function repoinfo(){
+  local OUTPUT=$(mktemp)
+  {
+    echo "==== This output is displayed with LESS ==="
+    echo -e "== Remote URL:\n$(git remote -v)\n"
+    echo -e "== Remote Branches:\n$( git branch -r)\n"
+    echo -e "== Local Branches:\n$( git branch)\n"
+    echo -e "== Configuration (.git/config):\n$( cat .git/config)\n"
+    echo -e "== Most Recent Commit:\n$( git --no-pager log --max-count=1)\n"
+    echo " " 
+  } >> "${OUTPUT}"
+  less "${OUTPUT}"
 }
 
 # Set some aliases
@@ -344,17 +315,12 @@ export SHELLCHECK_OPTS="-x -e SC2145\
  -e SC2005 -e SC1001 -e SC2004\
  -e SC1091"
 
-# Go settings
+# Golang settings
 if [[ "$(uname -s)" = "Darwin" ]]
 then
-    export GOROOT="/usr/local/opt/go/libexec"
-    export GOPATH="${GOROOT}/bin/go"
-else
-    export GOPATH="/usr/share/go/"
+  test -e /usr/local/opt/go/libexec && export GOROOT="/usr/local/opt/go/libexec"
+  test -e /usr/local/opt/go/libexec && export GOPATH="${GOROOT}/bin/go"
 fi
-
-# If available, source the 1password-cli login tracker
-[ -e "${LOGIN_TRACKER}" ] && source "${LOGIN_TRACKER}"
 
 ### Begin BaSH colors ###
 if [[ "${SHELL}" = "/usr/local/bin/bash" ]]
@@ -431,7 +397,25 @@ then
   On_IPurple='\e[10;95m' # Purple
   On_ICyan='\e[0;106m'   # Cyan
   On_IWhite='\e[0;107m'  # White
-
-  export CLICOLOR=1
 fi
 ### End BaSH Colors ###
+
+# Simple color test
+function colortest(){
+  echo " "
+  echo -e "\033[0mCOLOR_NC (No color)"
+  echo -e "\033[1;37mCOLOR_WHITE\t\033[0;30mCOLOR_BLACK"
+  echo -e "\033[0;34mCOLOR_BLUE\t\033[1;34mCOLOR_LIGHT_BLUE"
+  echo -e "\033[0;32mCOLOR_GREEN\t\033[1;32mCOLOR_LIGHT_GREEN"
+  echo -e "\033[0;36mCOLOR_CYAN\t\033[1;36mCOLOR_LIGHT_CYAN"
+  echo -e "\033[0;31mCOLOR_RED\t\033[1;31mCOLOR_LIGHT_RED"
+  echo -e "\033[0;35mCOLOR_PURPLE\t\033[1;35mCOLOR_LIGHT_PURPLE"
+  echo -e "\033[0;33mCOLOR_YELLOW\t\033[1;33mCOLOR_LIGHT_YELLOW"
+  echo -e "\033[1;30mCOLOR_GRAY\t\033[0;37mCOLOR_LIGHT_GRAY"
+  echo " "
+}
+
+# Set the prompt, it's time to work.
+function _prompt_command(){
+  PS1="\[$IRed\][\h]\[$IRed\][\[$Blue\]\u\[$IPurple\]::\W\[$IRed\]]\[$IGreen\][\D{%Y-%m-%d %H:%M}]\n\$ \[$Color_Off\]"
+}

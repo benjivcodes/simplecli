@@ -1,8 +1,8 @@
-Simple CLI
+SimpleCLI
 ============
 
 A simple, extensible (via included templates), command line based toolchain
-for Mac OS (or *nix if you chose) environments.
+for MacOS (or *nix if you chose) environments.
 
 Content authored by me is licensed the Apache 2.0, https://choosealicense.com/licenses/apache-2.0/.
 

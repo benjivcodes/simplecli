@@ -3,7 +3,7 @@
 # Create an encrypted dmg on the desktop.
 
 # Load the SimpleCLI 1password-cli functions
-source "/usr/local/lib/simplecli/bash/1passwd-cli"
+source "${HOME}/.simplecli/lib/bash/1passwd-cli"
 
 function secure_description(){
     echo "Secure file and dmg operations using openssl/hdiutil."
@@ -11,54 +11,52 @@ function secure_description(){
 
 function passwdcheck(){
   # Requires an ENCRYPTION_PWD to be set from 1password-cli
-  ENCRYPTION_PWD=$(getpwd dmg_encryption-key)
-
-  if [[ -z "${ENCRYPTION_PWD}" ]]
+  if [ -z "${ENCRYPTION_PWD}" ]
   then
-      echo -e "\nExpected ENCRYPTION_PWD environment to be set, exiting!"
+    echo -e "\nExpected ENCRYPTION_PWD environment to be set, exiting!"
+    exit 1
   fi
 }
 
 function secure_help(){
-  echo ""
+  echo " "
   echo " Create an ecrypted file/dmg from unecrypted source."
   echo " Decrypt source file to unencrypted version."
-  echo ""
-  echo " -i create ecnrypted dmg; takes source file as argument"
-  echo " -e create encrypted file; takes source file as argument"
-  echo " -d decrypte file; takes source file as argument"
-  echo " -h displays this help"
-  echo ""
-  exit 1
+  echo " "
+  echo " USAGE: $(basename "$0") secure <subcommand>"
+  echo " "
+  echo " AVAILABLE SUBCOMMANDS:"
+  echo " "
+  echo " dmg    create ecnrypted dmg; takes source folder as argument"
+  echo " file   create encrypted file; takes source file as argument"
+  echo " decr   decrypt file; takes source file as argument"
+  echo " help   returns this message"
+  echo " "
 }
 
 function secure_handle(){
   command="$1"
 
   case "$command" in
-    -h)
-      secure_help
-      exit 1
-    ;;
-
-    -i)
+    dmg)
+      passwdcheck
       shift;
-      if [[ -z $1 ]]
+      if [[ -z "$1" ]]
       then
-        echo -e "\nNo input or output file specified. Exiting."
+        echo -e "\nNo input or output folder specified. Exiting..."
         exit 1
       else
-        hdiutil create -encryption -stdinpass -srcfolder "$1" "$1_encrypted.dmg"
-        mv "$1_encrypted.dmg" "${HOME}/Desktop"
+        CREATEOPTS="-ov -encryption AES-256 -stdinpass -scrub -format ULFO -fs APFS -nocrossdev"
+        echo "${ENCRYPTION_PWD}" | hdiutil create  "${CREATEOPTS}" -volname "$1" -srcfolder "$1" "${HOME}"/Desktop/"$1"_encrypted.dmg
       fi
 
       exit 1
     ;;
 
-    -e)
+    file)
       passwdcheck
       shift;
-      if [[ -z $1 ]]
+      if [[ -z "$1" ]]
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1
@@ -69,10 +67,10 @@ function secure_handle(){
       exit 1
     ;;
 
-    -d)
+    decr)
       passwdcheck
       shift;
-      if [[ -z $1 ]]
+      if [[ -z "$1" ]]
       then
         echo -e "\nNo input or output file specified. Exiting."
         exit 1
@@ -81,10 +79,6 @@ function secure_handle(){
       fi
 
       exit 1
-    ;;
-
-    help)
-      secure_help
     ;;
 
     *)

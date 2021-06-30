@@ -6,18 +6,25 @@ function ssllabs_description(){
 }
 
 function ssllabs_help(){
-  echo -e "\n usage: $(basename "$0") ssllabs <subcommand>"
-  echo -e "\n AVAILABLE SUBCOMMANDS: \n"
-  echo " site     Scans <target> site and returns grade"
-  echo ""
+  echo " "
+  echo " Perform SSLLabs scan; requires ssllabs-scan go application"
+  echo " "
+  echo " USAGE: $(basename "$0") ssllabs <site>"
+  echo " "
+  echo " AVAILABLE SUBCOMMANDS:"
+  echo " help     returns this message"
+  echo " "
 }
 
 function ssllabs_handle(){
   command="$1"
 
   case "$command" in
-    site)
-    shift;
+    help)
+      ssllabs_help
+    ;;
+
+    *)
     if [[ -z "${GOROOT}" || -z "${GOPATH}" ]]
     then
       echo-e "\nNo GO environment detected, exiting..."
@@ -25,10 +32,6 @@ function ssllabs_handle(){
     
     echo -e "\nThis may take a while if results are older than 12 hours..."
     ssllabs-scan-v3 -usecache -maxage 12 -grade "$1"
-    ;;
-
-    help)
-      ssllabs_help
     ;;
  esac 
 }
